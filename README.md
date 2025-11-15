@@ -20,7 +20,7 @@ This project showcases a powerful synergy between Large Language Models (LLMs) f
 
 -   **Multiple Input Methods**: Start by browsing the public domain library, importing text from a URL, or uploading your own `.txt` file.
 -   **AI-Powered Scene Analysis**: Gemini Pro analyzes the text to extract distinct scenes, summaries, characters, dialogue, and action scores.
--   **Interactive Scene Review**: Users can review, edit, and fine-tune the AI's script, including character names, the action score (which influences panel size), and the visual prompt for image generation.
+-   **Enhanced Creative Control**: Users can review, edit, and fine-tune the AI's script. Manually write or refine character descriptions to guide the AI, and edit visual prompts for each scene. All changes support undo/redo.
 -   **Consistent Character Generation**: Generate unique, consistent visual appearances for each character based on their description in the text.
 -   **Customizable Page Layouts**: Choose from different layout algorithms powered by D3.js:
     -   `Balanced` (Treemap Squarify): A balanced, aesthetically pleasing layout.
@@ -31,7 +31,7 @@ This project showcases a powerful synergy between Large Language Models (LLMs) f
     -   Changing speech bubble font size and family.
     -   Selecting image generation quality (Low, Medium, High).
     -   Setting the panel aspect ratio (1:1, 4:3, 16:9, etc.).
--   **Export Options**: Download the final comic as a `.cbz` archive for comic book readers or export it as a high-quality `.pdf` document.
+-   **Flexible Export Options**: Download the final comic as a `.cbz` archive (for comic book readers), a high-quality `.pdf` document, or a `.zip` file containing individual high-resolution panel images (PNGs).
 -   **Session Management**: Automatically saves your progress during the scene review and character definition stages, allowing you to resume your session later.
 -   **PWA Functionality**: Installable on any device for a native-app feel, with offline access to core functionalities.
 -   **Light & Dark Mode**: Switch between themes for comfortable viewing.
@@ -50,9 +50,9 @@ This project showcases a powerful synergy between Large Language Models (LLMs) f
 
 1.  **Provide Text**: Start on the main screen. You can choose a classic book from the library, paste text copied from a source like Project Gutenberg, or upload your own `.txt` file.
 2.  **Review Scenes**: The app will take a moment to analyze your text. You will then be presented with a "Comic Script". Review each scene, make edits to the visual prompts, and adjust action scores as needed.
-3.  **Define Characters**: Based on the script, the app identifies characters. Click "Generate Appearance" for each one to create a consistent visual reference. You can re-generate until you are satisfied.
+3.  **Define Characters**: Based on the script, the app identifies characters. Click "Generate Appearance" for each one to create a consistent visual reference. You can re-generate until you are satisfied, or manually edit the text description.
 4.  **Generate Comic**: Once characters are defined, proceed to generate the full comic page. This involves generating an image for each panel and composing them.
-5.  **Customize & Export**: Use the floating settings panel to fine-tune the final look. When ready, use the download buttons to save your comic as a CBZ or PDF file.
+5.  **Customize & Export**: Use the floating settings panel to fine-tune the final look. When ready, use the download buttons to save your comic as a CBZ, PDF, or ZIP file.
 
 ### 🏗️ Architectural Concept
 
@@ -78,7 +78,7 @@ Dieses Projekt demonstriert eine leistungsstarke Synergie zwischen großen Sprac
 
 -   **Mehrere Eingabemethoden**: Beginnen Sie, indem Sie die Bibliothek gemeinfreier Bücher durchsuchen, Text von einer URL importieren oder Ihre eigene `.txt`-Datei hochladen.
 -   **KI-gestützte Szenenanalyse**: Gemini Pro analysiert den Text, um einzelne Szenen, Zusammenfassungen, Charaktere, Dialoge und Aktions-Wertungen zu extrahieren.
--   **Interaktive Szenenüberprüfung**: Benutzer können das KI-Skript überprüfen, bearbeiten und verfeinern, einschließlich Charakternamen, der Aktions-Wertung (die die Panelgröße beeinflusst) und des visuellen Prompts für die Bildgenerierung.
+-   **Erweiterte kreative Kontrolle**: Benutzer können das KI-Skript überprüfen, bearbeiten und verfeinern. Schreiben oder verfeinern Sie Charakterbeschreibungen manuell, um die KI zu leiten, und bearbeiten Sie visuelle Prompts für jede Szene. Alle Änderungen unterstützen Rückgängig/Wiederholen.
 -   **Konsistente Charaktergenerierung**: Erzeugen Sie einzigartige, konsistente visuelle Erscheinungsbilder für jeden Charakter basierend auf seiner Beschreibung im Text.
 -   **Anpassbare Seitenlayouts**: Wählen Sie aus verschiedenen Layout-Algorithmen, die von D3.js unterstützt werden:
     -   `Ausgeglichen` (Treemap Squarify): Ein ausgewogenes, ästhetisch ansprechendes Layout.
@@ -89,7 +89,7 @@ Dieses Projekt demonstriert eine leistungsstarke Synergie zwischen großen Sprac
     -   Ändern der Schriftgröße und -art der Sprechblasen.
     -   Auswahl der Bildqualität (Niedrig, Mittel, Hoch).
     -   Einstellen des Seitenverhältnisses der Panels (1:1, 4:3, 16:9 usw.).
--   **Exportoptionen**: Laden Sie den fertigen Comic als `.cbz`-Archiv für Comic-Reader herunter oder exportieren Sie ihn als hochwertiges `.pdf`-Dokument.
+-   **Flexible Exportoptionen**: Laden Sie den fertigen Comic als `.cbz`-Archiv (für Comic-Reader), als hochwertiges `.pdf`-Dokument oder als `.zip`-Datei mit einzelnen hochauflösenden Panel-Bildern (PNGs) herunter.
 -   **Sitzungsverwaltung**: Speichert automatisch Ihren Fortschritt während der Szenenüberprüfung und Charakterdefinition, sodass Sie Ihre Sitzung später fortsetzen können.
 -   **PWA-Funktionalität**: Installierbar auf jedem Gerät für ein natives App-Gefühl, mit Offline-Zugriff auf Kernfunktionen.
 -   **Heller & Dunkler Modus**: Wechseln Sie zwischen den Themen für eine angenehme Anzeige.
@@ -108,9 +108,9 @@ Dieses Projekt demonstriert eine leistungsstarke Synergie zwischen großen Sprac
 
 1.  **Text bereitstellen**: Beginnen Sie auf dem Hauptbildschirm. Sie können ein klassisches Buch aus der Bibliothek auswählen, Text aus einer Quelle wie Project Gutenberg einfügen oder Ihre eigene `.txt`-Datei hochladen.
 2.  **Szenen überprüfen**: Die App benötigt einen Moment, um Ihren Text zu analysieren. Ihnen wird dann ein "Comic-Skript" angezeigt. Überprüfen Sie jede Szene, nehmen Sie Änderungen an den visuellen Prompts vor und passen Sie die Aktions-Wertungen nach Bedarf an.
-3.  **Charaktere definieren**: Basierend auf dem Skript identifiziert die App Charaktere. Klicken Sie für jeden auf "Aussehen generieren", um eine konsistente visuelle Referenz zu erstellen. Sie können dies wiederholen, bis Sie zufrieden sind.
+3.  **Charaktere definieren**: Basierend auf dem Skript identifiziert die App Charaktere. Klicken Sie für jeden auf "Aussehen generieren", um eine konsistente visuelle Referenz zu erstellen. Sie können dies wiederholen, bis Sie zufrieden sind, oder die Textbeschreibung manuell bearbeiten.
 4.  **Comic generieren**: Sobald die Charaktere definiert sind, fahren Sie fort, um die vollständige Comic-Seite zu generieren. Dies umfasst das Erstellen eines Bildes für jedes Panel und deren Komposition.
-5.  **Anpassen & Exportieren**: Verwenden Sie das schwebende Einstellungsfenster, um das endgültige Aussehen zu verfeinern. Wenn Sie fertig sind, verwenden Sie die Download-Schaltflächen, um Ihren Comic als CBZ- oder PDF-Datei zu speichern.
+5.  **Anpassen & Exportieren**: Verwenden Sie das schwebende Einstellungsfenster, um das endgültige Aussehen zu verfeinern. Wenn Sie fertig sind, verwenden Sie die Download-Schaltflächen, um Ihren Comic als CBZ-, PDF- oder ZIP-Datei zu speichern.
 
 ### 🏗️ Architekturkonzept
 

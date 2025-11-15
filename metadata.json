@@ -1,0 +1,5 @@
+{
+  "name": "Comic-Gen PWA",
+  "description": "An AI-algorithmic engine to transform e-books into vibrant comic books. This app uses a hybrid approach, leveraging Gemini for scene analysis and image generation, while employing algorithmic techniques for page layout and composition, creating a visually stunning and narrative-driven experience.",
+  "requestFramePermissions": []
+}

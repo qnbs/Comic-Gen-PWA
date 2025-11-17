@@ -2,7 +2,7 @@ import { createSelector } from 'reselect';
 import { RootState } from '../app/store';
 import { SortOption } from '../components/comic-library/types';
 
-const selectComics = (state: RootState) => state.library.comics;
+const selectProjects = (state: RootState) => state.library.projects;
 // Pass component state as arguments to the selector
 const selectSearchQuery = (_state: RootState, searchQuery: string) => searchQuery;
 const selectSortOrder = (
@@ -11,12 +11,12 @@ const selectSortOrder = (
   sortOrder: SortOption,
 ) => sortOrder;
 
-export const selectFilteredAndSortedComics = createSelector(
-  [selectComics, selectSearchQuery, selectSortOrder],
-  (comics, searchQuery, sortOrder) => {
-    return [...comics]
-      .filter((comic) =>
-        comic.title.toLowerCase().includes(searchQuery.toLowerCase()),
+export const selectFilteredAndSortedProjects = createSelector(
+  [selectProjects, selectSearchQuery, selectSortOrder],
+  (projects, searchQuery, sortOrder) => {
+    return [...projects]
+      .filter((project) =>
+        project.title.toLowerCase().includes(searchQuery.toLowerCase()),
       )
       .sort((a, b) => {
         switch (sortOrder) {

@@ -5,7 +5,7 @@ const en = {
     footer: 'Built with React, Tailwind CSS, and the power of Gemini.',
     resume: {
       title: 'Resume Session?',
-      body: 'You have saved progress from {{date}}. Would you like to continue?',
+      body: 'You have saved progress from {{date}}. Would you like to to continue?',
       resumeButton: 'Resume',
       discardButton: 'Discard & Start New',
       discardConfirmation:
@@ -14,20 +14,22 @@ const en = {
   },
   importer: {
     tabBrowse: 'Browse Library',
-    tabUrl: 'Import from URL',
     tabUpload: 'Upload File',
+    pastePlaceholder: 'Paste Text',
     dragAndDrop: 'Drag & drop your .txt file here',
-    uploadHint: 'or click to select (Max 50KB)',
-    uploadError: 'Please upload a .txt file smaller than 50KB.',
-    selectFileError: 'Please select a file first.',
+    uploadHint: 'or click to select',
+    uploadError: 'Please upload a valid .txt file.',
     readFileError: 'Failed to read the file.',
-    urlDescription:
-      'Find a public domain book online (e.g., from Project Gutenberg), copy the text, and paste it below.',
-    pastePlaceholder: 'Paste book text here...',
     browseDescription:
-      'Start instantly with a classic from our curated public domain library.',
+      'Start with a classic from the Project Gutenberg library, sorted by popularity.',
     by: 'by',
-    generate: 'Generate Comic',
+    generate: 'Generate',
+    downloading: 'Downloading...',
+    loadMore: 'Load More',
+    loadingMore: 'Loading...',
+    fetchError: 'Failed to fetch books from the library.',
+    noTextFile: 'No text file available for "{{title}}".',
+    downloadError: 'Failed to download the book text.',
   },
   creatorWorkspace: {
     stepImport: 'Import',
@@ -63,7 +65,7 @@ const en = {
     characters: 'Characters',
     actionScore: 'Action Score (Panel Size)',
     visualPrompt: 'Visual Prompt',
-    continueToCharacter: 'Continue to Character Definition',
+    continueToCharacter: 'Continue to World-Building',
   },
   character: {
     defineTitle: 'Define Your Characters',
@@ -76,7 +78,55 @@ const en = {
     noImage: 'No Image',
     generateAppearance: 'Generate Appearance',
     noneDetected: 'No characters were detected in this text segment.',
-    proceed: 'Proceed to Generate Comic',
+    proceed: 'Proceed to Page Layout',
+    poseLibrary: 'Pose / Expression Library',
+    addPose: 'Add New Pose',
+    poseName: 'Pose Name',
+    poseDescription: 'Pose Description (e.g., "furious, shouting, fists clenched")',
+    generatePose: 'Generate Pose',
+  },
+  location: {
+    defineTitle: 'Define Key Locations',
+    defineSubtitle:
+      'Generate a consistent look for important settings in your story.',
+    referenceFor: 'Reference for',
+    descriptionFor: 'Description for',
+    descriptionPlaceholder:
+      'Enter a detailed visual description for this location...',
+    generateAppearance: 'Generate Scenery',
+  },
+  prop: {
+    defineTitle: 'Define Key Props',
+    defineSubtitle:
+      'Generate a consistent look for important items in your story.',
+    referenceFor: 'Reference for',
+    descriptionFor: 'Description for',
+    descriptionPlaceholder:
+      'Enter a detailed visual description for this item...',
+    generateAppearance: 'Generate Prop',
+  },
+  worldBuilding: {
+    title: 'World-Building Hub',
+    subtitle: 'Establish the visual canon for your comic. Consistency is key!',
+    tabCharacters: 'Characters',
+    tabLocations: 'Locations',
+    tabProps: 'Props',
+    proceed: 'Proceed to Page Layout',
+  },
+  pageLayout: {
+    title: 'Page Layout Editor',
+    subtitle: 'Select scenes from this chapter to compose a new comic page.',
+    selectScenes: 'Select Scenes',
+    generatePage: 'Generate Page ({{count}} scenes)',
+    noScenes: 'No scenes in this chapter.',
+  },
+  comicViewer: {
+    title: 'Comic Book Viewer',
+    subtitle:
+      'Here is your generated comic book. Drag and drop pages to reorder them.',
+    backToDashboard: 'Back to Dashboard',
+    exportPdf: 'Export as PDF',
+    exportCbz: 'Export as CBZ',
   },
   comic: {
     titlePrefix: 'Comic from',
@@ -267,6 +317,8 @@ const en = {
     undo: 'Undo',
     redo: 'Redo',
     edit: 'Edit',
+    save: 'Save',
+    cancel: 'Cancel',
     enabled: 'Enabled',
   },
   error: {
@@ -295,7 +347,15 @@ const en = {
     visualPromptPrompt: `A highly detailed visual prompt for an image generation AI. Describe the setting, characters' poses, actions, mood, lighting, and camera angle. Do NOT include style information like 'in the style of...'. Focus only on the content of the scene. Explicitly describe character appearances based on the text.`,
     actionScorePrompt:
       'An integer from 1 (a quiet, static scene) to 10 (a major action sequence or dramatic reveal). This score determines the panel size.',
+    propsPrompt:
+      'An array of strings for key inanimate objects or items central to this scene (e.g., "a golden key", "the rusty sword"). If none, return an empty array.',
     characterDescriptionPrompt: `Based on the following text, create a concise but detailed visual description of the character "{{characterName}}". Focus on physical traits, clothing, hair, and any defining features mentioned. This description will be used to ensure visual consistency in an AI image generator. Output only the description string.`,
+    locationDescriptionPrompt: `Based on the following text, create a concise but detailed visual description of the location "{{locationName}}". Focus on architecture, mood, lighting, key objects, and time of day. This description will be used for visual consistency. Output only the description string.`,
+    propDescriptionPrompt: `Based on the following text, create a concise but detailed visual description of the item "{{propName}}". Focus on material, shape, condition, and any defining features mentioned. This description will be used for visual consistency. Output only the description string.`,
+    poseImagePrompt: `Full body portrait of the character "{{characterName}}".
+  Base Character Description: {{characterDescription}}.
+  The character MUST be depicted with this specific pose and expression: {{poseDescription}}.
+  Style: character sheet, clean lines, neutral background, centered.`,
   },
 };
 
@@ -315,20 +375,22 @@ const de: typeof en = {
   },
   importer: {
     tabBrowse: 'Bibliothek',
-    tabUrl: 'Von URL importieren',
     tabUpload: 'Datei hochladen',
+    pastePlaceholder: 'Text einfügen',
     dragAndDrop: 'Ziehen Sie Ihre .txt-Datei hierher',
-    uploadHint: 'oder klicken Sie zum Auswählen (Max. 50KB)',
-    uploadError: 'Bitte laden Sie eine .txt-Datei hoch, die kleiner als 50KB ist.',
-    selectFileError: 'Bitte wählen Sie zuerst eine Datei aus.',
+    uploadHint: 'oder klicken Sie zum Auswählen',
+    uploadError: 'Bitte laden Sie eine gültige .txt-Datei hoch.',
     readFileError: 'Die Datei konnte nicht gelesen werden.',
-    urlDescription:
-      'Finden Sie ein gemeinfreies Buch online (z.B. von Project Gutenberg), kopieren Sie den Text und fügen Sie ihn unten ein.',
-    pastePlaceholder: 'Fügen Sie hier den Buchtext ein...',
     browseDescription:
-      'Starten Sie sofort mit einem Klassiker aus unserer kuratierten gemeinfreien Bibliothek.',
+      'Starten Sie mit einem Klassiker aus der Project-Gutenberg-Bibliothek, sortiert nach Beliebtheit.',
     by: 'von',
-    generate: 'Comic generieren',
+    generate: 'Generieren',
+    downloading: 'Wird heruntergeladen...',
+    loadMore: 'Mehr laden',
+    loadingMore: 'Lädt...',
+    fetchError: 'Fehler beim Abrufen von Büchern aus der Bibliothek.',
+    noTextFile: 'Keine Textdatei für "{{title}}" verfügbar.',
+    downloadError: 'Fehler beim Herunterladen des Buchtextes.',
   },
   creatorWorkspace: {
     stepImport: 'Import',
@@ -364,7 +426,7 @@ const de: typeof en = {
     characters: 'Charaktere',
     actionScore: 'Aktions-Wertung (Panel-Größe)',
     visualPrompt: 'Visueller Prompt',
-    continueToCharacter: 'Weiter zur Charakter-Definition',
+    continueToCharacter: 'Weiter zum World-Building',
   },
   character: {
     defineTitle: 'Definieren Sie Ihre Charaktere',
@@ -377,11 +439,62 @@ const de: typeof en = {
     noImage: 'Kein Bild',
     generateAppearance: 'Aussehen generieren',
     noneDetected: 'In diesem Textabschnitt wurden keine Charaktere erkannt.',
-    proceed: 'Weiter zur Comic-Generierung',
+    proceed: 'Weiter zum Seitenlayout',
+    poseLibrary: 'Posen- / Ausdrucksbibliothek',
+    addPose: 'Neue Pose hinzufügen',
+    poseName: 'Posenname',
+    poseDescription: 'Posenbeschreibung (z.B. "wütend, schreiend, Fäuste geballt")',
+    generatePose: 'Pose generieren',
+  },
+  location: {
+    defineTitle: 'Definiere wichtige Orte',
+    defineSubtitle:
+      'Generieren Sie ein konsistentes Aussehen für wichtige Schauplätze in Ihrer Geschichte.',
+    referenceFor: 'Referenz für',
+    descriptionFor: 'Beschreibung für',
+    descriptionPlaceholder:
+      'Geben Sie eine detaillierte visuelle Beschreibung für diesen Ort ein...',
+    generateAppearance: 'Szenerie generieren',
+  },
+  prop: {
+    defineTitle: 'Definiere wichtige Requisiten',
+    defineSubtitle:
+      'Generieren Sie ein konsistentes Aussehen für wichtige Gegenstände in Ihrer Geschichte.',
+    referenceFor: 'Referenz für',
+    descriptionFor: 'Beschreibung für',
+    descriptionPlaceholder:
+      'Geben Sie eine detaillierte visuelle Beschreibung für diesen Gegenstand ein...',
+    generateAppearance: 'Requisite generieren',
+  },
+  worldBuilding: {
+    title: 'World-Building Hub',
+    subtitle:
+      'Legen Sie den visuellen Kanon für Ihren Comic fest. Konsistenz ist der Schlüssel!',
+    tabCharacters: 'Charaktere',
+    tabLocations: 'Orte',
+    tabProps: 'Requisiten',
+    proceed: 'Weiter zum Seitenlayout',
+  },
+  pageLayout: {
+    title: 'Seitenlayout-Editor',
+    subtitle:
+      'Wählen Sie Szenen aus diesem Kapitel aus, um eine neue Comic-Seite zu erstellen.',
+    selectScenes: 'Szenen auswählen',
+    generatePage: 'Seite generieren ({{count}} Szenen)',
+    noScenes: 'Keine Szenen in diesem Kapitel.',
+  },
+  comicViewer: {
+    title: 'Comic-Betrachter',
+    subtitle:
+      'Hier ist Ihr generiertes Comic-Buch. Ziehen und ablegen, um Seiten neu zu ordnen.',
+    backToDashboard: 'Zurück zum Dashboard',
+    exportPdf: 'Als PDF exportieren',
+    exportCbz: 'Als CBZ exportieren',
   },
   comic: {
     titlePrefix: 'Comic vom',
-    mobileHint: 'Dies ist ein großes Format. Bitte benutzen Sie zwei Finger zum Zoomen.',
+    mobileHint:
+      'Dies ist ein großes Format. Bitte benutzen Sie zwei Finger zum Zoomen.',
     download: 'CBZ herunterladen',
     exportPdf: 'Als PDF exportieren',
     exportZip: 'Panels exportieren (ZIP)',
@@ -567,6 +680,8 @@ const de: typeof en = {
     undo: 'Rückgängig',
     redo: 'Wiederholen',
     edit: 'Bearbeiten',
+    save: 'Speichern',
+    cancel: 'Abbrechen',
     enabled: 'Aktiviert',
   },
   error: {
@@ -601,7 +716,15 @@ const de: typeof en = {
     visualPromptPrompt: `Ein sehr detaillierter visueller Prompt für eine Bilderzeugungs-KI. Beschreiben Sie die Umgebung, die Posen der Charaktere, Aktionen, Stimmung, Beleuchtung und den Kamerawinkel. Fügen Sie keine Stil-Informationen wie 'im Stil von...' hinzu. Konzentrieren Sie sich nur auf den Inhalt der Szene. Beschreiben Sie das Aussehen der Charaktere explizit basierend auf dem Text.`,
     actionScorePrompt:
       'Eine ganze Zahl von 1 (einer ruhigen, statischen Szene) bis 10 (einer großen Action-Sequenz oder dramatischen Enthüllung). Diese Wertung bestimmt die Panel-Größe.',
+    propsPrompt:
+      'Ein Array von Zeichenketten für wichtige unbelebte Objekte oder Gegenstände, die für diese Szene von zentraler Bedeutung sind (z. B. "ein goldener Schlüssel", "das rostige Schwert"). Wenn keine vorhanden sind, geben Sie ein leeres Array zurück.',
     characterDescriptionPrompt: `Basierend auf dem folgenden Text, erstelle eine prägnante, aber detaillierte visuelle Beschreibung des Charakters "{{characterName}}". Konzentriere dich auf physische Merkmale, Kleidung, Haare und alle erwähnten definierenden Merkmale. Diese Beschreibung wird verwendet, um die visuelle Konsistenz in einem KI-Bildgenerator zu gewährleisten. Gib nur den Beschreibungsstring aus.`,
+    locationDescriptionPrompt: `Basierend auf dem folgenden Text, erstelle eine prägnante, aber detaillierte visuelle Beschreibung des Ortes "{{locationName}}". Konzentriere dich auf Architektur, Stimmung, Beleuchtung, Schlüsselobjekte und Tageszeit. Diese Beschreibung wird für die visuelle Konsistenz verwendet. Gib nur den Beschreibungsstring aus.`,
+    propDescriptionPrompt: `Basierend auf dem folgenden Text, erstelle eine prägnante, aber detaillierte visuelle Beschreibung des Gegenstands "{{propName}}". Konzentriere dich auf Material, Form, Zustand und alle erwähnten definierenden Merkmale. Diese Beschreibung wird für die visuelle Konsistenz verwendet. Gib nur den Beschreibungsstring aus.`,
+    poseImagePrompt: `Ganzkörperporträt des Charakters "{{characterName}}".
+  Basis-Charakterbeschreibung: {{characterDescription}}.
+  Der Charakter MUSS mit dieser spezifischen Pose und diesem Ausdruck dargestellt werden: {{poseDescription}}.
+  Stil: Charakterbogen, saubere Linien, neutraler Hintergrund, zentriert.`,
   },
 };
 

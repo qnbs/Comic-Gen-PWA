@@ -6,49 +6,334 @@ import {
   treemapSliceDice,
   treemapBinary,
   HierarchyRectangularNode,
+  HierarchyNode,
 } from 'd3-hierarchy';
 import {
-  GenerationState,
+  ProjectGenerationState,
   Scene,
   Character,
-  ComicPageData,
-  SavedProgress,
+  ComicBookPage,
   PanelData,
+  ComicProject,
+  Chapter,
+  WorldAsset,
+  Pose,
 } from '../types';
 import * as geminiService from '../services/geminiService';
 import * as dbService from '../services/db';
 import { RootState, AppDispatch } from '../app/store';
-import { saveComicToLibrary } from './librarySlice';
+import { addToast } from './uiSlice';
 import { base64ToBlob } from '../services/utils';
+import { decode } from '../services/audioUtils';
+
+// Helper to build context for image generation prompts
+const buildPromptContext = (project: ComicProject): string => {
+  let context = '';
+  if (project.worldDB.characters.length > 0) {
+    context += 'CHARACTER REFERENCE:\n';
+    project.worldDB.characters.forEach(c => {
+      if (c.description) {
+        context += `- ${c.name}: ${c.description}\n`;
+      }
+      if (c.poses && c.poses.length > 0) {
+        context += `\nPOSES FOR ${c.name.toUpperCase()}:\n`;
+        c.poses.forEach(p => {
+          if (p.name && p.description) {
+            context += `- ${p.name}: ${p.description}\n`;
+          }
+        });
+      }
+    });
+  }
+   if (project.worldDB.locations.length > 0) {
+    context += 'LOCATION REFERENCE:\n';
+    project.worldDB.locations.forEach(l => {
+      if (l.description) {
+        context += `- ${l.name}: ${l.description}\n`;
+      }
+    });
+  }
+  if (project.worldDB.props.length > 0) {
+    context += 'PROP REFERENCE:\n';
+    project.worldDB.props.forEach(p => {
+      if (p.description) {
+        context += `- ${p.name}: ${p.description}\n`;
+      }
+    });
+  }
+  return context ? context + 'Ensure the visual depictions strictly adhere to these references.\n---\n' : '';
+};
+
 
 // Thunks for async operations
-export const startAnalysis = createAsyncThunk<
-  Scene[],
-  { text: string; language: 'en' | 'de' },
+export const createProject = createAsyncThunk<
+  ComicProject,
+  { text: string; title: string; language: 'en' | 'de' },
   { rejectValue: string }
 >(
-  'generation/startAnalysis',
-  async ({ text, language }, { rejectWithValue }) => {
+  'generation/createProject',
+  async ({ text, title, language }, { rejectWithValue }) => {
     try {
-      const sceneTexts = await geminiService.segmentTextIntoScenes(
-        text,
+      const chapterTexts = text.split(/\n\s*\n/).filter(t => t.trim().length > 10);
+
+      const chapterPromises = chapterTexts.map(async (chapText, index) => {
+          const sceneTexts = await geminiService.segmentTextIntoScenes(
+            chapText,
+            language,
+          );
+          if (!sceneTexts || sceneTexts.length === 0) {
+            throw new Error(`Could not extract scenes from chapter ${index + 1}.`);
+          }
+          const scenePromises = sceneTexts.map((sceneText) =>
+            geminiService.analyzeIndividualScene(sceneText, language),
+          );
+          const scenes = await Promise.all(scenePromises);
+          
+          const chapter: Chapter = {
+              chapterIndex: index,
+              title: `Chapter ${index + 1}`,
+              originalText: chapText,
+              scenes,
+          };
+          return chapter;
+      });
+      
+      const chapters = await Promise.all(chapterPromises);
+
+      const allCharacters = new Map<string, Character>();
+      const allLocations = new Set<string>();
+      const allProps = new Set<string>();
+      chapters.forEach(c => c.scenes.forEach(s => {
+        s.characters.forEach(charName => {
+          if (!allCharacters.has(charName)) {
+            allCharacters.set(charName, { name: charName, description: '', referenceImageUrl: null, poses: [] });
+          }
+        });
+        s.props.forEach(propName => allProps.add(propName));
+        // A simple heuristic for locations: look for capitalized words that aren't characters
+        const potentialLocations = s.summary.match(/\b[A-Z][a-z]+(?: [A-Z][a-z]+)*\b/g) || [];
+        potentialLocations.forEach(loc => {
+            if (!allCharacters.has(loc) && !allProps.has(loc)) {
+                allLocations.add(loc);
+            }
+        });
+      }));
+
+      const newProject: ComicProject = {
+        id: `project-${Date.now()}`,
+        title,
+        createdAt: new Date(),
+        originalFullText: text,
         language,
-      );
-      if (!sceneTexts || sceneTexts.length === 0) {
-        return rejectWithValue('Could not extract any scenes from the text.');
-      }
-      const analysisPromises = sceneTexts.map((sceneText) =>
-        geminiService.analyzeIndividualScene(sceneText, language),
-      );
-      return await Promise.all(analysisPromises);
+        chapters,
+        worldDB: { 
+            characters: Array.from(allCharacters.values()), 
+            locations: Array.from(allLocations).map(l => ({ name: l, description: '', referenceImageUrl: null })),
+            props: Array.from(allProps).map(p => ({ name: p, description: '', referenceImageUrl: null }))
+        },
+        pages: [],
+      };
+      
+      return newProject;
+
     } catch (err: unknown) {
       return rejectWithValue(
         err instanceof Error
           ? err.message
-          : 'An unknown error occurred during analysis.',
+          : 'An unknown error occurred during project creation.',
       );
     }
   },
+);
+
+export const generatePageFromScenes = createAsyncThunk<
+  ComicBookPage,
+  { sceneIndices: number[]; chapterIndex: number },
+  { rejectValue: string; state: RootState; dispatch: AppDispatch }
+>(
+  'generation/generatePageFromScenes',
+  async ({ sceneIndices, chapterIndex }, { getState, rejectWithValue }) => {
+    const { generation, settings } = getState();
+    const project = generation.project;
+    if (!project) return rejectWithValue('No active project.');
+    const chapter = project.chapters[chapterIndex];
+    if (!chapter) return rejectWithValue('Chapter not found.');
+
+    const scenesToProcess = sceneIndices.map(i => chapter.scenes[i]);
+    if (scenesToProcess.some(s => !s)) return rejectWithValue('Invalid scene selection.');
+
+    try {
+       const promptContext = buildPromptContext(project);
+
+      const imagePromises = scenesToProcess.map(scene => {
+          const fullPrompt = promptContext + scene.visualPrompt;
+          return geminiService.generatePanelImage(
+            fullPrompt,
+            settings.generation.imageQuality,
+            settings.generation.aspectRatio,
+            settings.generation.artStyle,
+            settings.generation.negativePrompt,
+          );
+      });
+      
+      const base64Images = await Promise.all(imagePromises);
+      const imageUrls = base64Images.map(base64 => URL.createObjectURL(base64ToBlob(base64)));
+
+      // Define an interface for the data structure used by D3 hierarchy.
+      // This improves type safety and removes the need for `any`.
+      interface LayoutDataNode {
+        name: string;
+        value: number;
+        scene: Scene;
+        imageUrl: string;
+        originalPrompt: string;
+      }
+      
+      // Define an interface for a D3 node that has been processed by .sum()
+      interface HierarchyNodeWithValue<Datum> extends HierarchyNode<Datum> {
+        value: number;
+      }
+
+      const layoutData = {
+        name: 'root',
+        children: scenesToProcess.map((scene, i): LayoutDataNode => ({
+          name: `scene-${i}`,
+          value: Math.max(1, scene.actionScore), // Ensure value is positive
+          scene: scene,
+          imageUrl: imageUrls[i],
+          originalPrompt: scene.visualPrompt,
+        })),
+      };
+
+      const root = hierarchy(layoutData)
+        .sum((d: LayoutDataNode) => d.value)
+        .sort((a, b) => (b as HierarchyNodeWithValue<unknown>).value - (a as HierarchyNodeWithValue<unknown>).value);
+
+      const treemapLayout = treemap().size([1100, 1600]).padding(settings.generation.gutterWidth);
+      
+      switch (settings.generation.layoutAlgorithm) {
+        case 'strip': treemapLayout.tile(treemapSliceDice); break;
+        case 'binary': treemapLayout.tile(treemapBinary); break;
+        case 'squarified': default: treemapLayout.tile(treemapSquarify); break;
+      }
+      
+      treemapLayout(root);
+
+      const panels: PanelData[] = (root.leaves() as HierarchyRectangularNode<{ scene: Scene, imageUrl: string, originalPrompt: string }>[]).map((node, i) => ({
+        id: `panel-${Date.now()}-${i}`,
+        x: node.x0,
+        y: node.y0,
+        width: node.x1 - node.x0,
+        height: node.y1 - node.y0,
+        imageUrl: node.data.imageUrl,
+        dialogue: node.data.scene.dialogue,
+        sceneIndex: chapter.scenes.indexOf(node.data.scene),
+        originalVisualPrompt: node.data.originalPrompt,
+      }));
+
+      const newPage: ComicBookPage = {
+        pageNumber: (project.pages.length || 0) + 1,
+        panels,
+      };
+
+      return newPage;
+    } catch (err: unknown) {
+      return rejectWithValue(err instanceof Error ? err.message : 'Failed to generate page.');
+    }
+  },
+);
+
+export const regeneratePanel = createAsyncThunk<
+  { panelId: string; imageUrl: string; newPrompt: string },
+  { panelId: string; newPrompt: string },
+  { rejectValue: string; state: RootState }
+>(
+  'generation/regeneratePanel',
+  async ({ panelId, newPrompt }, { getState, rejectWithValue }) => {
+    const { generation, settings } = getState();
+    if (!generation.project) {
+        return rejectWithValue('No project loaded.');
+    }
+    
+    try {
+      const promptContext = buildPromptContext(generation.project);
+      const fullPrompt = promptContext + newPrompt;
+
+      const base64Image = await geminiService.generatePanelImage(
+        fullPrompt,
+        settings.generation.imageQuality,
+        settings.generation.aspectRatio,
+        settings.generation.artStyle,
+        settings.generation.negativePrompt,
+      );
+      const blob = base64ToBlob(base64Image);
+      const imageUrl = URL.createObjectURL(blob);
+      return { panelId, imageUrl, newPrompt };
+    } catch (err: unknown) {
+      return rejectWithValue(err instanceof Error ? err.message : 'Failed to regenerate panel.');
+    }
+  }
+);
+
+export const generatePanelVideo = createAsyncThunk<
+  { panelId: string, videoUrl: string },
+  { panelId: string, prompt: string },
+  { rejectValue: string; state: RootState, dispatch: AppDispatch }
+>(
+  'generation/generatePanelVideo',
+  async ({ panelId, prompt }, { getState, rejectWithValue, dispatch }) => {
+    const { settings } = getState();
+    try {
+      let operation = await geminiService.generatePanelVideo(prompt, settings.generation.aspectRatio);
+      
+      while (!operation.done) {
+        await new Promise(resolve => setTimeout(resolve, 10000)); // Poll every 10 seconds
+        operation = await geminiService.pollVideoOperation(operation);
+      }
+
+      const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+      if (!downloadLink) {
+        throw new Error("Video generation succeeded but no download link was provided.");
+      }
+      
+      // The response.body contains the MP4 bytes. You must append an API key when fetching from the download link.
+      const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+      if (!response.ok) {
+        throw new Error(`Failed to download video file: ${response.statusText}`);
+      }
+      const videoBlob = await response.blob();
+      const videoUrl = URL.createObjectURL(videoBlob);
+      
+      dispatch(addToast({ message: 'Video panel generated!', type: 'success' }));
+      return { panelId, videoUrl };
+
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate video panel.';
+      dispatch(addToast({ message: errorMessage, type: 'error' }));
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const generateSpeechForPanel = createAsyncThunk<
+  { panelId: string, audioUrl: string },
+  { panelId: string, text: string },
+  { rejectValue: string; state: RootState }
+>(
+  'generation/generateSpeechForPanel',
+  async ({ panelId, text }, { getState, rejectWithValue }) => {
+      const { settings } = getState();
+      const voiceName = settings.speechBubbles.ttsVoice;
+      try {
+          const base64Audio = await geminiService.generateSpeech(text, voiceName);
+          const audioBytes = decode(base64Audio);
+          const audioBlob = new Blob([audioBytes], { type: 'audio/pcm;rate=24000' });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          return { panelId, audioUrl };
+      } catch (err: unknown) {
+          return rejectWithValue(err instanceof Error ? err.message : 'Failed to generate speech.');
+      }
+  }
 );
 
 export const generateCharacterSheet = createAsyncThunk<
@@ -58,529 +343,409 @@ export const generateCharacterSheet = createAsyncThunk<
 >(
   'generation/generateCharacterSheet',
   async ({ characterName, context }, { getState, rejectWithValue }) => {
-    const { language } = getState().generation;
+    const language = getState().generation.project?.language;
+    if (!language) {
+      return rejectWithValue('Project language not set.');
+    }
     try {
-      const { description, imageUrl } =
-        await geminiService.generateCharacterSheet(
-          characterName,
-          context,
-          language,
-        );
+      const { description, imageUrl } = await geminiService.generateCharacterSheet(characterName, context, language);
       return { characterName, description, imageUrl };
     } catch (err: unknown) {
-      return rejectWithValue(
-        err instanceof Error
-          ? err.message
-          : 'Failed to generate character sheet.',
-      );
+      return rejectWithValue(err instanceof Error ? err.message : 'Failed to generate character sheet.');
     }
-  },
+  }
 );
 
-export const generateComic = createAsyncThunk<
-  { page: ComicPageData; title: string },
-  void,
-  { rejectValue: string; state: RootState; dispatch: AppDispatch }
->(
-  'generation/generateComic',
-  async (_, { getState, rejectWithValue, dispatch }) => {
-    const {
-      sceneHistory,
-      sceneHistoryIndex,
-      characterHistory,
-      characterHistoryIndex,
-      originalText,
-      language,
-    } = getState().generation;
-    const { generation: generationSettings } = getState().settings;
-    const scenes = sceneHistory[sceneHistoryIndex];
-    const characters = characterHistory[characterHistoryIndex];
-    const { layoutAlgorithm, gutterWidth } = generationSettings;
-    const PAGE_WIDTH = 1100;
-    const PAGE_HEIGHT = 1600;
-
-    try {
-      const imageGenerationPromises = scenes.map((scene) => {
-        let characterDescriptions = '';
-        scene.characters.forEach((charName) => {
-          const characterData = characters.find((c) => c.name === charName);
-          if (characterData?.description) {
-            characterDescriptions += `\n- ${charName}: ${characterData.description}`;
-          }
-        });
-
-        let promptWithCharacterConsistency = scene.visualPrompt;
-        if (characterDescriptions) {
-          promptWithCharacterConsistency += `\n\n--- CHARACTER REFERENCE ---\n${characterDescriptions}\nEnsure the characters strictly adhere to these descriptions.`;
-        }
-        return geminiService.generatePanelImage(
-          promptWithCharacterConsistency,
-          generationSettings.imageQuality,
-          generationSettings.aspectRatio,
-          generationSettings.artStyle,
-          generationSettings.negativePrompt,
-        );
-      });
-      const base64Images = await Promise.all(imageGenerationPromises);
-
-      let panelsForState: PanelData[] = [];
-      let panelsForDb: PanelData[] = [];
-      const isTreemapLayout = ['squarified', 'strip', 'binary'].includes(
-        layoutAlgorithm,
-      );
-
-      if (isTreemapLayout) {
-        const root = hierarchy({ name: 'root', children: scenes })
-          .sum((d) => (d as Scene).actionScore || 1)
-          .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
-        const treemapLayout = treemap<Scene>()
-          .size([PAGE_WIDTH, PAGE_HEIGHT])
-          .padding(gutterWidth);
-        if (layoutAlgorithm === 'strip') treemapLayout.tile(treemapSliceDice);
-        else if (layoutAlgorithm === 'binary')
-          treemapLayout.tile(treemapBinary);
-        else treemapLayout.tile(treemapSquarify);
-
-        treemapLayout(root);
-        const leaves = root.leaves() as HierarchyRectangularNode<Scene>[];
-
-        panelsForState = leaves.map((leaf, index) => {
-          const scene = leaf.data;
-          const originalSceneIndex = scenes.findIndex((s) => s === scene);
-          const blob = base64ToBlob(base64Images[originalSceneIndex]);
-          return {
-            id: `panel-${index}`,
-            x: leaf.x0,
-            y: leaf.y0,
-            width: leaf.x1 - leaf.x0,
-            height: leaf.y1 - leaf.y0,
-            imageUrl: URL.createObjectURL(blob),
-            dialogue: scene.dialogue,
-            sceneIndex: originalSceneIndex,
-            originalVisualPrompt: scene.visualPrompt,
-          };
-        });
-        panelsForDb = leaves.map((leaf, index) => {
-          const scene = leaf.data;
-          const originalSceneIndex = scenes.findIndex((s) => s === scene);
-          return {
-            id: `panel-${index}`,
-            x: leaf.x0,
-            y: leaf.y0,
-            width: leaf.x1 - leaf.x0,
-            height: leaf.y1 - leaf.y0,
-            imageUrl: `data:image/jpeg;base64,${base64Images[originalSceneIndex]}`,
-            dialogue: scene.dialogue,
-            sceneIndex: originalSceneIndex,
-            originalVisualPrompt: scene.visualPrompt,
-          };
-        });
-      } else {
-        // Grid and Column layouts
-        let geometries: {
-          x: number;
-          y: number;
-          width: number;
-          height: number;
-        }[] = [];
-        if (layoutAlgorithm === 'column') {
-          const totalActionScore = scenes.reduce(
-            (sum, scene) => sum + (scene.actionScore || 1),
-            0,
-          );
-          const totalGutterHeight = (scenes.length + 1) * gutterWidth;
-          const availableHeight = PAGE_HEIGHT - totalGutterHeight;
-          let currentY = gutterWidth;
-
-          geometries = scenes.map((scene) => {
-            const panelHeight =
-              ((scene.actionScore || 1) / totalActionScore) * availableHeight;
-            const panelWidth = PAGE_WIDTH - 2 * gutterWidth;
-            const geom = {
-              x: gutterWidth,
-              y: currentY,
-              width: panelWidth,
-              height: panelHeight,
-            };
-            currentY += panelHeight + gutterWidth;
-            return geom;
-          });
-        } else if (layoutAlgorithm === 'grid') {
-          const colWidth = (PAGE_WIDTH - 3 * gutterWidth) / 2;
-          const numRows = Math.ceil(scenes.length / 2);
-          const rowHeight =
-            (PAGE_HEIGHT - (numRows + 1) * gutterWidth) / numRows;
-
-          geometries = scenes.map((_, index) => {
-            const rowIndex = Math.floor(index / 2);
-            const colIndex = index % 2;
-            const panelX = gutterWidth + colIndex * (colWidth + gutterWidth);
-            const panelY = gutterWidth + rowIndex * (rowHeight + gutterWidth);
-            return { x: panelX, y: panelY, width: colWidth, height: rowHeight };
-          });
-        }
-
-        panelsForState = scenes.map((scene, index) => {
-          const geom = geometries[index];
-          const blob = base64ToBlob(base64Images[index]);
-          return {
-            id: `panel-${index}`,
-            ...geom,
-            imageUrl: URL.createObjectURL(blob),
-            dialogue: scene.dialogue,
-            sceneIndex: index,
-            originalVisualPrompt: scene.visualPrompt,
-          };
-        });
-        panelsForDb = scenes.map((scene, index) => {
-          const geom = geometries[index];
-          return {
-            id: `panel-${index}`,
-            ...geom,
-            imageUrl: `data:image/jpeg;base64,${base64Images[index]}`,
-            dialogue: scene.dialogue,
-            sceneIndex: index,
-            originalVisualPrompt: scene.visualPrompt,
-          };
-        });
-      }
-
-      const title = `Comic from ${originalText.substring(0, 20) || 'text'}...`;
-      dispatch(
-        saveComicToLibrary({
-          page: { panels: panelsForDb },
-          title,
-          language,
-        }),
-      );
-
-      return { page: { panels: panelsForState }, title };
-    } catch (err: unknown) {
-      return rejectWithValue(
-        err instanceof Error
-          ? err.message
-          : 'An unknown error occurred during comic generation.',
-      );
-    }
-  },
-);
-
-export const regeneratePanel = createAsyncThunk<
-  { panelId: string; newImageUrl: string },
-  { panelId: string; newPrompt: string },
+export const generateLocationSheet = createAsyncThunk<
+  { locationName: string; description: string; imageUrl: string },
+  { locationName: string; context: string },
   { rejectValue: string; state: RootState }
 >(
-  'generation/regeneratePanel',
-  async ({ panelId, newPrompt }, { getState, rejectWithValue }) => {
-    const {
-      comicPage,
-      sceneHistory,
-      sceneHistoryIndex,
-      characterHistory,
-      characterHistoryIndex,
-    } = getState().generation;
-    const { generation: generationSettings } = getState().settings;
-
-    const panel = comicPage?.panels.find((p) => p.id === panelId);
-    if (!panel) return rejectWithValue('Panel not found');
-
-    const scene = sceneHistory[sceneHistoryIndex][panel.sceneIndex];
-    if (!scene) return rejectWithValue('Original scene not found');
-
-    const characters = characterHistory[characterHistoryIndex];
-    let characterDescriptions = '';
-    scene.characters.forEach((charName) => {
-      const characterData = characters.find((c) => c.name === charName);
-      if (characterData?.description) {
-        characterDescriptions += `\n- ${charName}: ${characterData.description}`;
-      }
-    });
-
-    let finalPrompt = newPrompt;
-    if (characterDescriptions) {
-      finalPrompt += `\n\n--- CHARACTER REFERENCE ---\n${characterDescriptions}\nEnsure the characters strictly adhere to these descriptions.`;
+  'generation/generateLocationSheet',
+  async ({ locationName, context }, { getState, rejectWithValue }) => {
+    const language = getState().generation.project?.language;
+    if (!language) {
+      return rejectWithValue('Project language not set.');
     }
-
     try {
-      const base64Image = await geminiService.generatePanelImage(
-        finalPrompt,
-        generationSettings.imageQuality,
-        generationSettings.aspectRatio,
-        generationSettings.artStyle,
-        generationSettings.negativePrompt,
-      );
-      const byteCharacters = atob(base64Image);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'image/jpeg' });
-      const newImageUrl = URL.createObjectURL(blob);
-
-      return { panelId, newImageUrl };
+      const { description, imageUrl } = await geminiService.generateLocationSheet(locationName, context, language);
+      return { locationName, description, imageUrl };
     } catch (err: unknown) {
-      return rejectWithValue(
-        err instanceof Error ? err.message : 'Image regeneration failed.',
-      );
+      return rejectWithValue(err instanceof Error ? err.message : 'Failed to generate location sheet.');
     }
-  },
+  }
 );
 
-export const loadProgress = createAsyncThunk<
-  SavedProgress | null,
-  void,
-  { rejectValue: string }
->('generation/loadProgress', async (_, { rejectWithValue }) => {
-  try {
-    return await dbService.loadProgress();
-  } catch (err: unknown) {
-    return rejectWithValue('Failed to load progress.');
+export const generatePropSheet = createAsyncThunk<
+  { propName: string; description: string; imageUrl: string },
+  { propName: string; context: string },
+  { rejectValue: string; state: RootState }
+>(
+  'generation/generatePropSheet',
+  async ({ propName, context }, { getState, rejectWithValue }) => {
+    const language = getState().generation.project?.language;
+    if (!language) {
+      return rejectWithValue('Project language not set.');
+    }
+    try {
+      const { description, imageUrl } = await geminiService.generatePropSheet(propName, context, language);
+      return { propName, description, imageUrl };
+    } catch (err: unknown) {
+      return rejectWithValue(err instanceof Error ? err.message : 'Failed to generate prop sheet.');
+    }
   }
-});
+);
+
+export const generatePoseImage = createAsyncThunk<
+  { characterName: string; poseId: string; imageUrl: string },
+  { characterName: string; poseId: string; poseDescription: string },
+  { rejectValue: string; state: RootState }
+>(
+  'generation/generatePoseImage',
+  async ({ characterName, poseId, poseDescription }, { getState, rejectWithValue }) => {
+    const { project } = getState().generation;
+    if (!project) return rejectWithValue('No project loaded.');
+    
+    const character = project.worldDB.characters.find(c => c.name === characterName);
+    if (!character) return rejectWithValue('Character not found.');
+    if (!character.description) return rejectWithValue('Character base description is missing.');
+
+    const language = project.language;
+
+    try {
+      const { imageUrl } = await geminiService.generatePoseImage(
+        characterName,
+        character.description,
+        poseDescription,
+        language
+      );
+      return { characterName, poseId, imageUrl };
+    } catch (err: unknown) {
+      return rejectWithValue(err instanceof Error ? err.message : 'Failed to generate pose image.');
+    }
+  }
+);
+
+// Add stub thunk for generateComic to prevent compile errors.
+export const generateComic = createAsyncThunk(
+  'generation/generateComic',
+  () => { console.warn("generateComic is not implemented in the new project structure."); }
+);
 
 interface GenerationSliceState {
-  generationState: GenerationState;
-  originalText: string;
-  language: 'en' | 'de';
+  generationState: ProjectGenerationState;
+  project: ComicProject | null;
   error: string | null;
-  comicPage: ComicPageData | null;
-  savedProgress: SavedProgress | null;
+  activeChapterIndex: number | null;
   panelRegenerationStatus: Record<string, 'idle' | 'loading'>;
-  // Undo/Redo states
-  sceneHistory: Scene[][];
-  sceneHistoryIndex: number;
-  characterHistory: Character[][];
-  characterHistoryIndex: number;
+  panelVideoGenerationStatus: Record<string, 'idle' | 'loading'>;
+  panelAudioGenerationStatus: Record<string, 'idle' | 'loading'>;
 }
 
 const initialState: GenerationSliceState = {
-  generationState: GenerationState.IDLE,
-  originalText: '',
-  language: 'en',
+  generationState: ProjectGenerationState.PROJECT_SETUP,
+  project: null,
   error: null,
-  comicPage: null,
-  savedProgress: null,
+  activeChapterIndex: null,
   panelRegenerationStatus: {},
-  sceneHistory: [],
-  sceneHistoryIndex: -1,
-  characterHistory: [],
-  characterHistoryIndex: -1,
+  panelVideoGenerationStatus: {},
+  panelAudioGenerationStatus: {},
 };
 
 const generationSlice = createSlice({
   name: 'generation',
   initialState,
   reducers: {
-    updateScene(
-      state,
-      action: PayloadAction<{ index: number; updatedScene: Scene }>,
-    ) {
-      const { index, updatedScene } = action.payload;
-      const currentScenes = state.sceneHistory[state.sceneHistoryIndex] || [];
-      const newScenes = [...currentScenes];
-      newScenes[index] = updatedScene;
-      const newHistory = state.sceneHistory.slice(
-        0,
-        state.sceneHistoryIndex + 1,
-      );
-      newHistory.push(newScenes);
-      state.sceneHistory = newHistory;
-      state.sceneHistoryIndex = newHistory.length - 1;
+    loadProject(state, action: PayloadAction<ComicProject>) {
+      const project = action.payload;
+      // Ensure backward compatibility for projects saved without the poses array
+      project.worldDB.characters.forEach(char => {
+        if (!char.poses) {
+          char.poses = [];
+        }
+      });
+      state.project = project;
+      state.generationState = ProjectGenerationState.DONE;
+      state.activeChapterIndex = null;
+      state.error = null;
     },
-    undoSceneChange(state) {
-      if (state.sceneHistoryIndex > 0) state.sceneHistoryIndex--;
+    resetApp(state) {
+      Object.assign(state, initialState);
     },
-    redoSceneChange(state) {
-      if (state.sceneHistoryIndex < state.sceneHistory.length - 1)
-        state.sceneHistoryIndex++;
+    discardSession(state) {
+      Object.assign(state, initialState);
     },
-    scenesReviewed(state, action: PayloadAction<Scene[]>) {
-      const allCharacters: string[] = action.payload.reduce<string[]>(
-        (acc, scene) => acc.concat(scene.characters),
-        [],
-      );
-      const characterNames: string[] = [...new Set(allCharacters)];
-      const initialCharacters: Character[] = characterNames.map((name) => ({
-        name,
-        description: '',
-        referenceImageUrl: null,
-      }));
-      state.characterHistory = [initialCharacters];
-      state.characterHistoryIndex = 0;
-      state.generationState = GenerationState.CHARACTER_DEFINITION;
+    setGenerationStep(state, action: PayloadAction<ProjectGenerationState>) {
+        state.generationState = action.payload;
+        if (action.payload === ProjectGenerationState.PROJECT_SETUP) {
+            state.project = null;
+        }
     },
-    updateCharacterDescription(
-      state,
-      action: PayloadAction<{ name: string; description: string }>,
-    ) {
-      const { name, description } = action.payload;
-      const currentChars =
-        state.characterHistory[state.characterHistoryIndex] || [];
-      const newCharacters = currentChars.map((c) =>
-        c.name === name ? { ...c, description } : c,
-      );
-      const newHistory = state.characterHistory.slice(
-        0,
-        state.characterHistoryIndex + 1,
-      );
-      newHistory.push(newCharacters);
-      state.characterHistory = newHistory;
-      state.characterHistoryIndex = newHistory.length - 1;
+    setActiveChapter(state, action: PayloadAction<number | null>) {
+        state.activeChapterIndex = action.payload;
+        if (action.payload !== null) {
+            state.generationState = ProjectGenerationState.CHAPTER_REVIEW;
+        } else if (state.project) {
+            state.generationState = ProjectGenerationState.DONE;
+        }
     },
-    undoCharacterChange(state) {
-      if (state.characterHistoryIndex > 0) state.characterHistoryIndex--;
+    updatePanelDialogue(state, action: PayloadAction<{ pageNumber: number; panelId: string; newDialogue: string }>) {
+        if (state.project) {
+            const page = state.project.pages.find(p => p.pageNumber === action.payload.pageNumber);
+            if (page) {
+                const panel = page.panels.find(p => p.id === action.payload.panelId);
+                if (panel) {
+                    panel.dialogue = action.payload.newDialogue;
+                }
+            }
+        }
     },
-    redoCharacterChange(state) {
-      if (state.characterHistoryIndex < state.characterHistory.length - 1)
-        state.characterHistoryIndex++;
+    updatePanelLayout(state, action: PayloadAction<{ pageNumber: number; panelId: string; layout: { x: number; y: number; width: number; height: number } }>) {
+        if (state.project) {
+            const page = state.project.pages.find(p => p.pageNumber === action.payload.pageNumber);
+            if (page) {
+                const panel = page.panels.find(p => p.id === action.payload.panelId);
+                if (panel) {
+                    panel.x = action.payload.layout.x;
+                    panel.y = action.payload.layout.y;
+                    panel.width = action.payload.layout.width;
+                    panel.height = action.payload.layout.height;
+                }
+            }
+        }
     },
-    updatePanelDialogue(
-      state,
-      action: PayloadAction<{ panelId: string; newDialogue: string }>,
-    ) {
-      if (state.comicPage) {
-        const panel = state.comicPage.panels.find(
-          (p) => p.id === action.payload.panelId,
-        );
-        if (panel) {
-          panel.dialogue = action.payload.newDialogue;
+    updateCharacterDescription(state, action: PayloadAction<{ name: string; description: string }>) {
+        if (state.project) {
+            const char = state.project.worldDB.characters.find(c => c.name === action.payload.name);
+            if (char) {
+                char.description = action.payload.description;
+            }
+        }
+    },
+    updateLocationDescription(state, action: PayloadAction<{ name: string; description: string }>) {
+        if (state.project) {
+            const loc = state.project.worldDB.locations.find(l => l.name === action.payload.name);
+            if (loc) {
+                loc.description = action.payload.description;
+            }
+        }
+    },
+    updatePropDescription(state, action: PayloadAction<{ name: string; description: string }>) {
+        if (state.project) {
+            const prop = state.project.worldDB.props.find(p => p.name === action.payload.name);
+            if (prop) {
+                prop.description = action.payload.description;
+            }
+        }
+    },
+    updateScene(state, action: PayloadAction<{ chapterIndex: number; sceneIndex: number; updatedScene: Scene }>) {
+      if (state.project) {
+        const chapter = state.project.chapters[action.payload.chapterIndex];
+        if (chapter) {
+          chapter.scenes[action.payload.sceneIndex] = action.payload.updatedScene;
         }
       }
     },
-    resetApp(state) {
-      const lang = state.language;
-      Object.assign(state, initialState);
-      state.language = lang; // Persist language choice
-      dbService.clearProgress();
-    },
-    resumeSession(state) {
-      if (state.savedProgress) {
-        state.generationState = state.savedProgress.generationState;
-        state.originalText = state.savedProgress.originalText;
-        state.language = state.savedProgress.language;
-        state.sceneHistory = state.savedProgress.sceneHistory;
-        state.sceneHistoryIndex = state.savedProgress.sceneHistoryIndex;
-        state.characterHistory = state.savedProgress.characterHistory;
-        state.characterHistoryIndex = state.savedProgress.characterHistoryIndex;
-        state.savedProgress = null;
+    reorderPages(state, action: PayloadAction<{ fromIndex: number; toIndex: number }>) {
+      if (state.project) {
+        const [movedPage] = state.project.pages.splice(action.payload.fromIndex, 1);
+        state.project.pages.splice(action.payload.toIndex, 0, movedPage);
+        // Renumber pages after reordering to maintain sequence
+        state.project.pages.forEach((page, index) => {
+            page.pageNumber = index + 1;
+        });
       }
     },
-    discardSession(state) {
-      state.savedProgress = null;
-      dbService.clearProgress();
+    addPoseToCharacter(state, action: PayloadAction<{ characterName: string }>) {
+      if (state.project) {
+          const character = state.project.worldDB.characters.find(c => c.name === action.payload.characterName);
+          if (character) {
+              if (!character.poses) character.poses = [];
+              const newPose: Pose = {
+                  id: `pose-${Date.now()}`,
+                  name: 'New Pose',
+                  description: '',
+                  referenceImageUrl: null,
+              };
+              character.poses.push(newPose);
+          }
+      }
     },
-    setComicPageFromStored(
-      state,
-      action: PayloadAction<{
-        title: string;
-        page: ComicPageData;
-        language: 'en' | 'de';
-      }>,
-    ) {
-      state.originalText = action.payload.title;
-      state.comicPage = action.payload.page;
-      state.language = action.payload.language;
-      state.generationState = GenerationState.DONE;
+    removePoseFromCharacter(state, action: PayloadAction<{ characterName: string; poseId: string }>) {
+        if (state.project) {
+            const character = state.project.worldDB.characters.find(c => c.name === action.payload.characterName);
+            if (character && character.poses) {
+                character.poses = character.poses.filter(p => p.id !== action.payload.poseId);
+            }
+        }
+    },
+    updatePose(state, action: PayloadAction<{ characterName: string; poseId: string; name: string; description: string }>) {
+        if (state.project) {
+            const character = state.project.worldDB.characters.find(c => c.name === action.payload.characterName);
+            if (character && character.poses) {
+                const pose = character.poses.find(p => p.id === action.payload.poseId);
+                if (pose) {
+                    pose.name = action.payload.name;
+                    pose.description = action.payload.description;
+                }
+            }
+        }
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(startAnalysis.pending, (state, action) => {
-        state.generationState = GenerationState.SEGMENTING_SCENES;
-        state.originalText = action.meta.arg.text;
-        state.language = action.meta.arg.language;
+      .addCase(createProject.pending, (state) => {
+        state.generationState = ProjectGenerationState.GLOBAL_ANALYSIS;
+        state.project = null;
         state.error = null;
-        state.comicPage = null;
-        state.savedProgress = null;
-        dbService.clearProgress();
+        state.activeChapterIndex = null;
       })
-      .addCase(startAnalysis.fulfilled, (state, action) => {
-        state.sceneHistory = [action.payload];
-        state.sceneHistoryIndex = 0;
-        state.generationState = GenerationState.REVIEW_SCENES;
+      .addCase(createProject.fulfilled, (state, action) => {
+        state.project = action.payload;
+        state.generationState = ProjectGenerationState.CHAPTER_REVIEW;
+        state.activeChapterIndex = action.payload.chapters.length > 0 ? 0 : null;
       })
-      .addCase(startAnalysis.rejected, (state, action) => {
-        state.error = action.payload ?? 'Failed to analyze text.';
-        state.generationState = GenerationState.ERROR;
+      .addCase(createProject.rejected, (state, action) => {
+        state.error = action.payload ?? 'Failed to create project.';
+        state.generationState = ProjectGenerationState.ERROR;
       })
-      .addCase(generateCharacterSheet.fulfilled, (state, action) => {
-        const { characterName, description, imageUrl } = action.payload;
-        const currentChars =
-          state.characterHistory[state.characterHistoryIndex] || [];
-        const newCharacters = currentChars.map((c) =>
-          c.name === characterName
-            ? { ...c, description, referenceImageUrl: imageUrl }
-            : c,
-        );
-        const newHistory = state.characterHistory.slice(
-          0,
-          state.characterHistoryIndex + 1,
-        );
-        newHistory.push(newCharacters);
-        state.characterHistory = newHistory;
-        state.characterHistoryIndex = newHistory.length - 1;
+       .addCase(generatePageFromScenes.pending, (state) => {
+        state.generationState = ProjectGenerationState.GENERATING_PAGES;
+        state.error = null;
       })
-      .addCase(generateComic.pending, (state) => {
-        state.generationState = GenerationState.GENERATING_IMAGES;
-        dbService.clearProgress();
+      .addCase(generatePageFromScenes.fulfilled, (state, action) => {
+        if (state.project) {
+            state.project.pages.push(action.payload);
+        }
+        state.generationState = ProjectGenerationState.DONE;
       })
-      .addCase(generateComic.fulfilled, (state, action) => {
-        state.comicPage = action.payload.page;
-        state.generationState = GenerationState.DONE;
-      })
-      .addCase(generateComic.rejected, (state, action) => {
-        state.error = action.payload ?? 'Failed to generate comic.';
-        state.generationState = GenerationState.ERROR;
+      .addCase(generatePageFromScenes.rejected, (state, action) => {
+        state.error = action.payload ?? 'Failed to generate page.';
+        state.generationState = ProjectGenerationState.ERROR;
       })
       .addCase(regeneratePanel.pending, (state, action) => {
-        state.panelRegenerationStatus[action.meta.arg.panelId] = 'loading';
+          state.panelRegenerationStatus[action.meta.arg.panelId] = 'loading';
       })
       .addCase(regeneratePanel.fulfilled, (state, action) => {
-        const { panelId, newImageUrl } = action.payload;
-        if (state.comicPage) {
-          const panel = state.comicPage.panels.find((p) => p.id === panelId);
-          if (panel) {
-            // Revoke old blob URL to prevent memory leaks
-            if (panel.imageUrl.startsWith('blob:')) {
-              URL.revokeObjectURL(panel.imageUrl);
-            }
-            panel.imageUrl = newImageUrl;
+          state.panelRegenerationStatus[action.payload.panelId] = 'idle';
+          if (state.project) {
+              for (const page of state.project.pages) {
+                  const panel = page.panels.find(p => p.id === action.payload.panelId);
+                  if (panel) {
+                      if (panel.imageUrl.startsWith('blob:')) {
+                          URL.revokeObjectURL(panel.imageUrl);
+                      }
+                      panel.imageUrl = action.payload.imageUrl;
+                      panel.originalVisualPrompt = action.payload.newPrompt;
+                      // Clear video/audio as they are now outdated
+                      panel.videoUrl = undefined;
+                      panel.isVideo = false;
+                      panel.audioUrl = undefined;
+                      break;
+                  }
+              }
           }
-        }
-        state.panelRegenerationStatus[panelId] = 'idle';
       })
       .addCase(regeneratePanel.rejected, (state, action) => {
-        // You can add error handling here, e.g., show a toast notification
-        console.error('Panel regeneration failed:', action.payload);
-        state.panelRegenerationStatus[action.meta.arg.panelId] = 'idle';
+          state.panelRegenerationStatus[action.meta.arg.panelId] = 'idle';
+          state.error = action.payload ?? 'Failed to regenerate panel.';
       })
-      .addCase(loadProgress.fulfilled, (state, action) => {
-        state.savedProgress = action.payload;
+      .addCase(generateCharacterSheet.fulfilled, (state, action) => {
+          if (state.project) {
+              const char = state.project.worldDB.characters.find(c => c.name === action.payload.characterName);
+              if (char) {
+                  char.description = action.payload.description;
+                  char.referenceImageUrl = action.payload.imageUrl;
+              }
+          }
+      })
+      .addCase(generateLocationSheet.fulfilled, (state, action) => {
+          if (state.project) {
+              const loc = state.project.worldDB.locations.find(l => l.name === action.payload.locationName);
+              if (loc) {
+                  loc.description = action.payload.description;
+                  loc.referenceImageUrl = action.payload.imageUrl;
+              }
+          }
+      })
+      .addCase(generatePropSheet.fulfilled, (state, action) => {
+          if (state.project) {
+              const prop = state.project.worldDB.props.find(p => p.name === action.payload.propName);
+              if (prop) {
+                  prop.description = action.payload.description;
+                  prop.referenceImageUrl = action.payload.imageUrl;
+              }
+          }
+      })
+      .addCase(generatePoseImage.fulfilled, (state, action) => {
+        if (state.project) {
+            const character = state.project.worldDB.characters.find(c => c.name === action.payload.characterName);
+            if (character && character.poses) {
+                const pose = character.poses.find(p => p.id === action.payload.poseId);
+                if (pose) {
+                    pose.referenceImageUrl = action.payload.imageUrl;
+                }
+            }
+        }
+      })
+      .addCase(generatePanelVideo.pending, (state, action) => {
+          state.panelVideoGenerationStatus[action.meta.arg.panelId] = 'loading';
+      })
+      .addCase(generatePanelVideo.fulfilled, (state, action) => {
+          state.panelVideoGenerationStatus[action.payload.panelId] = 'idle';
+          if (state.project) {
+              for (const page of state.project.pages) {
+                  const panel = page.panels.find(p => p.id === action.payload.panelId);
+                  if (panel) {
+                      panel.videoUrl = action.payload.videoUrl;
+                      panel.isVideo = true;
+                      break;
+                  }
+              }
+          }
+      })
+      .addCase(generatePanelVideo.rejected, (state, action) => {
+          state.panelVideoGenerationStatus[action.meta.arg.panelId] = 'idle';
+          state.error = action.payload ?? 'Failed to generate video.';
+      })
+      .addCase(generateSpeechForPanel.pending, (state, action) => {
+          state.panelAudioGenerationStatus[action.meta.arg.panelId] = 'loading';
+      })
+      .addCase(generateSpeechForPanel.fulfilled, (state, action) => {
+          state.panelAudioGenerationStatus[action.payload.panelId] = 'idle';
+          if (state.project) {
+              for (const page of state.project.pages) {
+                  const panel = page.panels.find(p => p.id === action.payload.panelId);
+                  if (panel) {
+                      panel.audioUrl = action.payload.audioUrl;
+                      break;
+                  }
+              }
+          }
+      })
+      .addCase(generateSpeechForPanel.rejected, (state, action) => {
+          state.panelAudioGenerationStatus[action.meta.arg.panelId] = 'idle';
+          state.error = action.payload ?? 'Failed to generate audio.';
       });
   },
 });
 
 export const {
-  updateScene,
-  undoSceneChange,
-  redoSceneChange,
-  scenesReviewed,
-  updateCharacterDescription,
-  undoCharacterChange,
-  redoCharacterChange,
-  updatePanelDialogue,
+  loadProject,
   resetApp,
-  resumeSession,
+  setActiveChapter,
+  setGenerationStep,
+  updatePanelDialogue,
+  updatePanelLayout,
+  updateCharacterDescription,
+  updateLocationDescription,
+  updatePropDescription,
+  updateScene,
+  reorderPages,
   discardSession,
-  setComicPageFromStored,
+  addPoseToCharacter,
+  removePoseFromCharacter,
+  updatePose,
 } = generationSlice.actions;
-
-// Selectors
-export const selectCurrentScenes = (state: RootState) =>
-  state.generation.sceneHistory[state.generation.sceneHistoryIndex] || [];
-export const selectCurrentCharacters = (state: RootState) =>
-  state.generation.characterHistory[state.generation.characterHistoryIndex] ||
-  [];
 
 export default generationSlice.reducer;

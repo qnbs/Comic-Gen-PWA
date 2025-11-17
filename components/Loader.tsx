@@ -1,10 +1,10 @@
 import React from 'react';
-import { GenerationState } from '../types';
+import { ProjectGenerationState } from '../types';
 import { BookOpenIcon, ImageIcon, WandIcon, ScissorsIcon } from './Icons';
 import { useTranslation } from '../hooks/useTranslation';
 
 interface LoaderProps {
-  state: GenerationState;
+  state: ProjectGenerationState;
 }
 
 const Loader: React.FC<LoaderProps> = ({ state }) => {
@@ -12,29 +12,29 @@ const Loader: React.FC<LoaderProps> = ({ state }) => {
 
   const loadingInfo = React.useMemo(() => {
     switch (state) {
-      case GenerationState.SEGMENTING_SCENES:
-        return {
-          icon: <ScissorsIcon className="w-12 h-12" />,
-          text: t('loader.segmentingScenes'),
-          description: t('loader.segmentingScenesDesc'),
-        };
-      case GenerationState.ANALYZING_TEXT:
+      case ProjectGenerationState.GLOBAL_ANALYSIS:
         return {
           icon: <BookOpenIcon className="w-12 h-12" />,
           text: t('loader.analyzingText'),
           description: t('loader.analyzingTextDesc'),
         };
-      case GenerationState.GENERATING_IMAGES:
+      case ProjectGenerationState.GENERATING_PAGES:
         return {
           icon: <ImageIcon className="w-12 h-12" />,
           text: t('loader.generatingImages'),
           description: t('loader.generatingImagesDesc'),
         };
-      case GenerationState.COMPOSING:
-        return {
+      case ProjectGenerationState.WORLD_BUILDING:
+         return {
           icon: <WandIcon className="w-12 h-12" />,
-          text: t('loader.composingPage'),
-          description: t('loader.composingPageDesc'),
+          text: 'Building Your World...',
+          description: 'Establishing visual consistency for characters and locations. This ensures they look the same in every panel.',
+        };
+      case ProjectGenerationState.PAGE_LAYOUT:
+        return {
+          icon: <ScissorsIcon className="w-12 h-12" />,
+          text: 'Designing Page Layout...',
+          description: 'Calculating the optimal size and position for each panel based on its action score.',
         };
       default:
         return {

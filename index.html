@@ -20,6 +20,63 @@
       body {
         font-family: 'Inter', sans-serif;
       }
+      .dragging-ghost {
+        opacity: 0.6;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+        transform: scale(0.51) !important; /* Scale + user-defined scale */
+      }
+      .drop-indicator {
+        height: 4px;
+        width: 100%;
+        background-color: #4f46e5;
+        border-radius: 2px;
+        animation: pulse 1.5s infinite;
+      }
+      @keyframes pulse {
+        0%, 100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+      .panel-handle {
+        position: absolute;
+        background-color: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        border-radius: 9999px;
+        transition: all 0.2s ease-in-out;
+        opacity: 0;
+        z-index: 10;
+      }
+      .group:hover .panel-handle {
+        opacity: 1;
+      }
+      .panel-move-handle {
+        top: 8px;
+        left: 8px;
+        width: 32px;
+        height: 32px;
+        cursor: move;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .panel-move-handle:hover {
+        transform: scale(1.1);
+        background-color: white;
+      }
+      .panel-resize-handle {
+        bottom: 8px;
+        right: 8px;
+        width: 20px;
+        height: 20px;
+        cursor: nwse-resize;
+      }
+      .panel-resize-handle:hover {
+        transform: scale(1.2);
+        background-color: white;
+      }
     </style>
   <script type="importmap">
 {
@@ -33,7 +90,7 @@
     "d3-hierarchy": "https://aistudiocdn.com/d3-hierarchy@^3.1.2",
     "d3-force": "https://aistudiocdn.com/d3-force@^3.0.0",
     "idb": "https://aistudiocdn.com/idb@^8.0.0",
-    "jszip": "https://aistudiocdn.com/jszip@^3.10.1",
+    "jszip": "https://aistudiocdn.com/jszip@^3.1.0",
     "reselect": "https://aistudiocdn.com/reselect@^5.1.1"
   }
 }

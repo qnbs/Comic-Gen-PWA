@@ -1,27 +1,45 @@
 import React from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import type { PanelData } from '../types';
+import { useAppDispatch } from '../app/hooks';
+import { regeneratePanel } from '../features/generationSlice';
+import { XCircleIcon } from './Icons';
 
 interface RegeneratePanelModalProps {
   panel: PanelData;
   onClose: () => void;
-  onRegenerate: (newPrompt: string) => void;
+  onSuccess: () => void;
 }
 
 const RegeneratePanelModal: React.FC<RegeneratePanelModalProps> = ({
   panel,
   onClose,
-  onRegenerate,
+  onSuccess,
 }) => {
   const { t } = useTranslation();
+  const dispatch = useAppDispatch();
   const [prompt, setPrompt] = React.useState(panel.originalVisualPrompt);
   const [isGenerating, setIsGenerating] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsGenerating(true);
-    onRegenerate(prompt);
-    // The parent component will handle closing the modal upon completion
+    setError(null);
+    try {
+      await dispatch(
+        regeneratePanel({ panelId: panel.id, newPrompt: prompt }),
+      ).unwrap();
+      onSuccess();
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(t('error.somethingWentWrong'));
+      }
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -76,6 +94,12 @@ const RegeneratePanelModal: React.FC<RegeneratePanelModalProps> = ({
             >
               {prompt.length} / 1000
             </p>
+            {error && (
+              <div className="mt-4 flex items-start gap-2 text-sm text-red-500 dark:text-red-400 p-3 bg-red-50 dark:bg-red-900/30 rounded-md border border-red-200 dark:border-red-700">
+                <XCircleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <p>{error}</p>
+              </div>
+            )}
             <div className="mt-6 flex justify-end">
               <button
                 type="submit"

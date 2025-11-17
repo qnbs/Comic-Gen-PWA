@@ -1,8 +1,8 @@
 import React from 'react';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
-import { fetchComics } from '../features/librarySlice';
+import { fetchProjects } from '../features/librarySlice';
 import { setCurrentPage } from '../features/uiSlice';
-import type { StoredComic } from '../types';
+import type { ComicProject } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
 import {
   ComicLibraryProvider,
@@ -15,15 +15,15 @@ import DeleteConfirmModal from './comic-library/DeleteConfirmModal';
 import { LibraryIcon } from './Icons';
 
 interface ComicLibraryProps {
-  onLoadComic: (comic: StoredComic) => void;
+  onLoadProject: (project: ComicProject) => void;
   onBack: () => void;
 }
 
-const ComicLibraryContent: React.FC<ComicLibraryProps> = ({ onLoadComic }) => {
+const ComicLibraryContent: React.FC<ComicLibraryProps> = ({ onLoadProject }) => {
   const { status } = useAppSelector((state) => state.library);
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const { filteredAndSortedComics } = useComicLibraryContext();
+  const { filteredAndSortedProjects } = useComicLibraryContext();
 
   if (status === 'loading' || status === 'idle') {
     return (
@@ -45,7 +45,7 @@ const ComicLibraryContent: React.FC<ComicLibraryProps> = ({ onLoadComic }) => {
     <div className="w-full max-w-6xl mx-auto p-4 sm:p-8 bg-white/50 dark:bg-gray-800/50 rounded-2xl border border-gray-300 dark:border-gray-700 shadow-2xl flex flex-col">
       <LibraryHeader />
 
-      {filteredAndSortedComics.length === 0 ? (
+      {filteredAndSortedProjects.length === 0 ? (
         <div className="text-center py-20 flex-grow flex flex-col items-center justify-center">
           <LibraryIcon className="w-24 h-24 text-gray-300 dark:text-gray-600 mb-4" />
           <h3 className="text-2xl font-bold">{t('comicLibrary.emptyTitle')}</h3>
@@ -60,7 +60,7 @@ const ComicLibraryContent: React.FC<ComicLibraryProps> = ({ onLoadComic }) => {
           </button>
         </div>
       ) : (
-        <ComicGrid onLoadComic={onLoadComic} />
+        <ComicGrid onLoadProject={onLoadProject} />
       )}
 
       <LibraryFooter />
@@ -69,19 +69,19 @@ const ComicLibraryContent: React.FC<ComicLibraryProps> = ({ onLoadComic }) => {
   );
 };
 
-const ComicLibrary: React.FC<ComicLibraryProps> = ({ onLoadComic, onBack }) => {
+const ComicLibrary: React.FC<ComicLibraryProps> = ({ onLoadProject, onBack }) => {
   const dispatch = useAppDispatch();
   const { status } = useAppSelector((state) => state.library);
 
   React.useEffect(() => {
     if (status === 'idle') {
-      dispatch(fetchComics());
+      dispatch(fetchProjects());
     }
   }, [status, dispatch]);
 
   return (
     <ComicLibraryProvider>
-      <ComicLibraryContent onLoadComic={onLoadComic} onBack={onBack} />
+      <ComicLibraryContent onLoadProject={onLoadProject} onBack={onBack} />
     </ComicLibraryProvider>
   );
 };

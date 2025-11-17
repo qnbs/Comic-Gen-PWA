@@ -18,6 +18,8 @@ const GeneralSettings: React.FC = () => {
     const handleBubbleChange = <K extends keyof typeof settings.speechBubbles>(key: K, value: (typeof settings.speechBubbles)[K]) => {
         handleSettingChange('speechBubbles', { ...settings.speechBubbles, [key]: value });
     };
+    
+    const ttsVoices = ['Zephyr', 'Kore', 'Puck', 'Charon', 'Fenrir'];
 
     return (
         <div className="p-4 max-w-md mx-auto space-y-6">
@@ -54,6 +56,14 @@ const GeneralSettings: React.FC = () => {
                             <option style={{fontFamily: "'Bangers', cursive"}} value="'Bangers', cursive">{t('settings.fontBangers')}</option>
                             <option style={{fontFamily: "Arial, sans-serif"}} value="Arial, sans-serif">Arial</option>
                             <option style={{fontFamily: "'Times New Roman', serif"}} value="'Times New Roman', serif">Times New Roman</option>
+                        </select>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <label className="font-medium text-gray-700 dark:text-gray-300 text-sm">TTS Voice</label>
+                        <select value={settings.speechBubbles.ttsVoice} onChange={e => handleBubbleChange('ttsVoice', e.target.value)} className="w-48 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-1 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            {ttsVoices.map(voice => (
+                                <option key={voice} value={voice}>{voice}</option>
+                            ))}
                         </select>
                     </div>
                      <div className="flex items-center justify-between">

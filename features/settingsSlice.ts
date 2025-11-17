@@ -12,6 +12,7 @@ const defaultState: AppSettings = {
     backgroundColor: '#FFFFFF',
     textColor: '#000000',
     opacity: 0.9,
+    ttsVoice: 'Zephyr', // Added default TTS voice
   },
   generation: {
     layoutAlgorithm: 'squarified',

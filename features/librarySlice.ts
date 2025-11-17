@@ -1,67 +1,44 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as dbService from '../services/db';
-import type { StoredComic, ComicPageData } from '../types';
+import type { ComicProject } from '../types';
 import { resetApp } from './generationSlice';
 import { AppDispatch } from '../app/store';
 
-export const fetchComics = createAsyncThunk<
-  StoredComic[],
+export const fetchProjects = createAsyncThunk<
+  ComicProject[],
   void,
   { rejectValue: string }
->('library/fetchComics', async (_, { rejectWithValue }) => {
+>('library/fetchProjects', async (_, { rejectWithValue }) => {
   try {
-    return await dbService.getComics();
+    return await dbService.getProjects();
   } catch (err: unknown) {
-    return rejectWithValue('Failed to load comics.');
+    return rejectWithValue('Failed to load projects.');
   }
 });
 
-export const saveComicToLibrary = createAsyncThunk<
-  StoredComic,
-  { page: ComicPageData; title: string; language: 'en' | 'de' },
-  { rejectValue: string }
->(
-  'library/saveComicToLibrary',
-  async ({ page, title, language }, { rejectWithValue }) => {
-    try {
-      const newComic: StoredComic = {
-        id: `comic-${Date.now()}`,
-        title,
-        createdAt: new Date(),
-        page,
-        language,
-      };
-      await dbService.saveComic(newComic);
-      return newComic;
-    } catch (err: unknown) {
-      return rejectWithValue('Failed to save comic.');
-    }
-  },
-);
-
-export const deleteComicFromLibrary = createAsyncThunk<
+export const deleteProjectFromLibrary = createAsyncThunk<
   string,
   string,
   { rejectValue: string }
->('library/deleteComic', async (id, { rejectWithValue }) => {
+>('library/deleteProject', async (id, { rejectWithValue }) => {
   try {
-    await dbService.deleteComic(id);
+    await dbService.deleteProject(id);
     return id;
   } catch (err: unknown) {
-    return rejectWithValue('Failed to delete comic.');
+    return rejectWithValue('Failed to delete project.');
   }
 });
 
-export const deleteMultipleComicsFromLibrary = createAsyncThunk<
+export const deleteMultipleProjectsFromLibrary = createAsyncThunk<
   string[],
   string[],
   { rejectValue: string }
->('library/deleteMultipleComics', async (ids, { rejectWithValue }) => {
+>('library/deleteMultipleProjects', async (ids, { rejectWithValue }) => {
   try {
-    await dbService.deleteMultipleComics(ids);
+    await dbService.deleteMultipleProjects(ids);
     return ids;
   } catch (err: unknown) {
-    return rejectWithValue('Failed to delete selected comics.');
+    return rejectWithValue('Failed to delete selected projects.');
   }
 });
 
@@ -70,18 +47,18 @@ export const clearAllData = createAsyncThunk<
   void,
   { dispatch: AppDispatch }
 >('library/clearAllData', async (_, { dispatch }) => {
-  await dbService.clearAllComics();
+  await dbService.clearAllProjects();
   dispatch(resetApp());
 });
 
 interface LibraryState {
-  comics: StoredComic[];
+  projects: ComicProject[];
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
 }
 
 const initialState: LibraryState = {
-  comics: [],
+  projects: [],
   status: 'idle',
   error: null,
 };
@@ -92,31 +69,28 @@ const librarySlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchComics.pending, (state) => {
+      .addCase(fetchProjects.pending, (state) => {
         state.status = 'loading';
       })
-      .addCase(fetchComics.fulfilled, (state, action) => {
+      .addCase(fetchProjects.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.comics = action.payload;
+        state.projects = action.payload;
       })
-      .addCase(fetchComics.rejected, (state, action) => {
+      .addCase(fetchProjects.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload ?? 'Unknown error';
       })
-      .addCase(saveComicToLibrary.fulfilled, (state, action) => {
-        state.comics.unshift(action.payload); // Add new comic to the start of the list
-      })
-      .addCase(deleteComicFromLibrary.fulfilled, (state, action) => {
-        state.comics = state.comics.filter(
-          (comic) => comic.id !== action.payload,
+      .addCase(deleteProjectFromLibrary.fulfilled, (state, action) => {
+        state.projects = state.projects.filter(
+          (project) => project.id !== action.payload,
         );
       })
-      .addCase(deleteMultipleComicsFromLibrary.fulfilled, (state, action) => {
+      .addCase(deleteMultipleProjectsFromLibrary.fulfilled, (state, action) => {
         const deletedIds = new Set(action.payload);
-        state.comics = state.comics.filter((comic) => !deletedIds.has(comic.id));
+        state.projects = state.projects.filter((project) => !deletedIds.has(project.id));
       })
       .addCase(clearAllData.fulfilled, (state) => {
-        state.comics = [];
+        state.projects = [];
         state.status = 'idle';
       });
   },

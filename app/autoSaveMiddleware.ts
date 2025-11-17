@@ -1,6 +1,6 @@
 import { Middleware, AnyAction } from '@reduxjs/toolkit';
-import { saveProgress } from '../services/db';
-import { GenerationState, SavedProgress } from '../types';
+import { saveProject } from '../services/db';
+import { ProjectGenerationState } from '../types';
 import { RootState } from './store';
 
 // Debounce function to prevent saving on every keystroke
@@ -15,34 +15,18 @@ const debounce = <T extends unknown[]>(
   };
 };
 
+// Rewrote performSave to work with the new project-based state.
 const performSave = (state: RootState) => {
   const { generation } = state;
-  const {
-    generationState,
-    originalText,
-    sceneHistory,
-    sceneHistoryIndex,
-    characterHistory,
-    characterHistoryIndex,
-    language,
-  } = generation;
+  const { generationState, project } = generation;
 
+  // Only save if a project exists and is in a state where user is making edits.
   if (
-    generationState === GenerationState.REVIEW_SCENES ||
-    generationState === GenerationState.CHARACTER_DEFINITION
+    project &&
+    (generationState === ProjectGenerationState.CHAPTER_REVIEW ||
+      generationState === ProjectGenerationState.WORLD_BUILDING)
   ) {
-    const progress: SavedProgress = {
-      generationState,
-      originalText,
-      scenes: sceneHistory[sceneHistoryIndex],
-      sceneHistory,
-      sceneHistoryIndex,
-      characterHistory,
-      characterHistoryIndex,
-      timestamp: Date.now(),
-      language,
-    };
-    saveProgress(progress);
+    saveProject(project);
   }
 };
 

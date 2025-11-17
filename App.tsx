@@ -1,12 +1,13 @@
 import React from 'react';
 import { useAppDispatch, useAppSelector } from './app/hooks';
-import { setCurrentPage, exportPanelsAsZip } from './features/uiSlice';
-import { setComicPageFromStored } from './features/generationSlice';
-import { StoredComic } from './types';
+import { setCurrentPage } from './features/uiSlice';
+import { loadProject } from './features/generationSlice';
+import { ComicProject } from './types';
 import CreatorWorkspace from './components/CreatorWorkspace';
 import SettingsPage from './components/SettingsPage';
 import HelpPage from './components/HelpPage';
 import ComicLibrary from './components/ComicLibrary';
+import ToastContainer from './components/ToastContainer';
 import {
   BookOpenIcon,
   SparklesIcon,
@@ -15,7 +16,6 @@ import {
   LibraryIcon,
 } from './components/Icons';
 import { useTranslation } from './hooks/useTranslation';
-import { base64ToBlob } from './services/utils';
 
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -32,28 +32,10 @@ const App: React.FC = () => {
     // Theme persistence is now handled by persistenceMiddleware
   }, [theme]);
 
-  const handleLoadComic = (comic: StoredComic) => {
-    const panelsWithObjectUrls = comic.page.panels.map((panel) => {
-      // Fallback for older saved comics that might not have the new fields
-      const panelWithDefaults = {
-        ...panel,
-        sceneIndex: panel.sceneIndex ?? 0,
-        originalVisualPrompt: panel.originalVisualPrompt ?? '',
-      };
-      const base64String = panelWithDefaults.imageUrl.split(',')[1];
-      const blob = base64ToBlob(base64String);
-      return {
-        ...panelWithDefaults,
-        imageUrl: URL.createObjectURL(blob),
-      };
-    });
-    dispatch(
-      setComicPageFromStored({
-        title: comic.title,
-        page: { panels: panelsWithObjectUrls },
-        language: comic.language,
-      }),
-    );
+  const handleLoadProject = (project: ComicProject) => {
+    // Blob URL revocation is now handled within the ComicPage component's lifecycle
+    // to prevent memory leaks and premature revocation.
+    dispatch(loadProject(project));
     dispatch(setCurrentPage('creator'));
   };
 
@@ -69,7 +51,7 @@ const App: React.FC = () => {
       case 'library':
         return (
           <ComicLibrary
-            onLoadComic={handleLoadComic}
+            onLoadProject={handleLoadProject}
             onBack={() => dispatch(setCurrentPage('creator'))}
           />
         );
@@ -79,52 +61,55 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 sm:p-8">
-      <header className="w-full max-w-5xl text-center mb-8 relative">
-        <div className="absolute top-0 right-0 flex items-center gap-2">
-          <button
-            onClick={() => dispatch(setCurrentPage('library'))}
-            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            aria-label={t('comicLibrary.title')}
+    <>
+      <div className="min-h-screen flex flex-col items-center p-4 sm:p-8">
+        <header className="w-full max-w-5xl text-center mb-8 relative">
+          <div className="absolute top-0 right-0 flex items-center gap-2">
+            <button
+              onClick={() => dispatch(setCurrentPage('library'))}
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              aria-label={t('comicLibrary.title')}
+            >
+              <LibraryIcon className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => dispatch(setCurrentPage('settings'))}
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              aria-label={t('settings.title')}
+            >
+              <CogIcon className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => dispatch(setCurrentPage('help'))}
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              aria-label={t('helpPage.title')}
+            >
+              <HelpCircleIcon className="w-6 h-6" />
+            </button>
+          </div>
+          <h1
+            className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-600 dark:from-purple-400 dark:to-indigo-500 flex items-center justify-center gap-4 cursor-pointer"
+            onClick={() => dispatch(setCurrentPage('creator'))}
           >
-            <LibraryIcon className="w-6 h-6" />
-          </button>
-          <button
-            onClick={() => dispatch(setCurrentPage('settings'))}
-            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            aria-label={t('settings.title')}
-          >
-            <CogIcon className="w-6 h-6" />
-          </button>
-          <button
-            onClick={() => dispatch(setCurrentPage('help'))}
-            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            aria-label={t('helpPage.title')}
-          >
-            <HelpCircleIcon className="w-6 h-6" />
-          </button>
-        </div>
-        <h1
-          className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-600 dark:from-purple-400 dark:to-indigo-500 flex items-center justify-center gap-4 cursor-pointer"
-          onClick={() => dispatch(setCurrentPage('creator'))}
-        >
-          <BookOpenIcon className="w-10 h-10" />
-          Comic-Gen PWA
-          <SparklesIcon className="w-10 h-10" />
-        </h1>
-        <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-          {t('app.subtitle')}
-        </p>
-      </header>
+            <BookOpenIcon className="w-10 h-10" />
+            Comic-Gen PWA
+            <SparklesIcon className="w-10 h-10" />
+          </h1>
+          <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
+            {t('app.subtitle')}
+          </p>
+        </header>
 
-      <main className="w-full flex-grow flex items-center justify-center">
-        {renderContent()}
-      </main>
+        <main className="w-full flex-grow flex items-center justify-center">
+          {renderContent()}
+        </main>
 
-      <footer className="w-full max-w-5xl text-center mt-8 text-gray-500 dark:text-gray-500 text-sm">
-        <p>{t('app.footer')}</p>
-      </footer>
-    </div>
+        <footer className="w-full max-w-5xl text-center mt-8 text-gray-500 dark:text-gray-500 text-sm">
+          <p>{t('app.footer')}</p>
+        </footer>
+      </div>
+      <ToastContainer />
+    </>
   );
 };
 

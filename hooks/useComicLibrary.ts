@@ -1,11 +1,11 @@
 import React from 'react';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import {
-  deleteComicFromLibrary,
-  deleteMultipleComicsFromLibrary,
+  deleteProjectFromLibrary,
+  deleteMultipleProjectsFromLibrary,
 } from '../features/librarySlice';
-import { selectFilteredAndSortedComics } from '../features/librarySelectors';
-import type { StoredComic } from '../types';
+import { selectFilteredAndSortedProjects } from '../features/librarySelectors';
+import type { ComicProject } from '../types';
 import type { SortOption } from '../components/comic-library/types';
 import { base64ToBlob } from '../services/utils';
 
@@ -14,8 +14,8 @@ export const useComicLibrary = () => {
 
   const [searchQuery, setSearchQuery] = React.useState('');
   const [sortOrder, setSortOrder] = React.useState<SortOption>('date-desc');
-  const [selectedComics, setSelectedComics] = React.useState<string[]>([]);
-  const [comicToDelete, setComicToDelete] = React.useState<StoredComic | null>(
+  const [selectedProjects, setSelectedProjects] = React.useState<string[]>([]);
+  const [projectToDelete, setProjectToDelete] = React.useState<ComicProject | null>(
     null,
   );
   const [isBulkDelete, setIsBulkDelete] = React.useState(false);
@@ -24,26 +24,34 @@ export const useComicLibrary = () => {
   >({});
   const memoizedUrls = React.useRef<Record<string, string>>({});
 
-  const filteredAndSortedComics = useAppSelector((state) =>
-    selectFilteredAndSortedComics(state, searchQuery, sortOrder),
+  const filteredAndSortedProjects = useAppSelector((state) =>
+    selectFilteredAndSortedProjects(state, searchQuery, sortOrder),
   );
 
   React.useEffect(() => {
     const newUrls: Record<string, string> = {};
-    filteredAndSortedComics.forEach((comic) => {
-      if (memoizedUrls.current[comic.id]) {
-        newUrls[comic.id] = memoizedUrls.current[comic.id];
-      } else if (comic.page?.panels?.[0]?.imageUrl) {
-        const base64String = comic.page.panels[0].imageUrl.split(',')[1];
-        if (base64String) {
-          try {
-            const blob = base64ToBlob(base64String);
-            const url = URL.createObjectURL(blob);
-            memoizedUrls.current[comic.id] = url;
-            newUrls[comic.id] = url;
-          } catch (e) {
-            console.error(`Failed to create blob for comic ${comic.id}`, e);
-          }
+    filteredAndSortedProjects.forEach((project) => {
+      if (memoizedUrls.current[project.id]) {
+        newUrls[project.id] = memoizedUrls.current[project.id];
+      } else if (project.pages?.[0]?.panels?.[0]?.imageUrl) {
+         // Projects store full base64 strings if saved from older versions, or blob URLs for new ones.
+        const imageUrl = project.pages[0].panels[0].imageUrl;
+        if (imageUrl.startsWith('blob:')) {
+            // It's already a URL, just use it.
+            newUrls[project.id] = imageUrl;
+        } else if (imageUrl.startsWith('data:')) {
+            // It's a base64 string, convert it.
+            const base64String = imageUrl.split(',')[1];
+            if (base64String) {
+              try {
+                const blob = base64ToBlob(base64String);
+                const url = URL.createObjectURL(blob);
+                memoizedUrls.current[project.id] = url;
+                newUrls[project.id] = url;
+              } catch (e) {
+                console.error(`Failed to create blob for project ${project.id}`, e);
+              }
+            }
         }
       }
     });
@@ -54,38 +62,38 @@ export const useComicLibrary = () => {
       Object.values(memoizedUrls.current).forEach(URL.revokeObjectURL);
       memoizedUrls.current = {};
     };
-  }, [filteredAndSortedComics]);
+  }, [filteredAndSortedProjects]);
 
-  const handleSingleDelete = React.useCallback((comic: StoredComic) => {
+  const handleSingleDelete = React.useCallback((project: ComicProject) => {
     setIsBulkDelete(false);
-    setComicToDelete(comic);
+    setProjectToDelete(project);
   }, []);
 
   const handleBulkDelete = React.useCallback(() => {
     setIsBulkDelete(true);
-    setComicToDelete({} as StoredComic); // Dummy object to open modal
+    setProjectToDelete({} as ComicProject); // Dummy object to open modal
   }, []);
 
   const confirmDelete = React.useCallback(() => {
     if (isBulkDelete) {
-      dispatch(deleteMultipleComicsFromLibrary(selectedComics));
-      setSelectedComics([]);
-    } else if (comicToDelete) {
-      dispatch(deleteComicFromLibrary(comicToDelete.id));
+      dispatch(deleteMultipleProjectsFromLibrary(selectedProjects));
+      setSelectedProjects([]);
+    } else if (projectToDelete) {
+      dispatch(deleteProjectFromLibrary(projectToDelete.id));
     }
-    setComicToDelete(null);
-  }, [isBulkDelete, comicToDelete, selectedComics, dispatch]);
+    setProjectToDelete(null);
+  }, [isBulkDelete, projectToDelete, selectedProjects, dispatch]);
 
-  const handleSelectComic = React.useCallback((id: string) => {
-    setSelectedComics((prev) =>
+  const handleSelectProject = React.useCallback((id: string) => {
+    setSelectedProjects((prev) =>
       prev.includes(id)
-        ? prev.filter((comicId) => comicId !== id)
+        ? prev.filter((projectId) => projectId !== id)
         : [...prev, id],
     );
   }, []);
 
   const clearSelection = React.useCallback(() => {
-    setSelectedComics([]);
+    setSelectedProjects([]);
   }, []);
 
   return {
@@ -93,17 +101,17 @@ export const useComicLibrary = () => {
     setSearchQuery,
     sortOrder,
     setSortOrder,
-    selectedComics,
-    handleSelectComic,
+    selectedProjects,
+    handleSelectProject,
     clearSelection,
-    comicToDelete,
+    projectToDelete,
     isBulkDelete,
     handleSingleDelete,
     handleBulkDelete,
     confirmDelete,
-    cancelDelete: () => setComicToDelete(null),
+    cancelDelete: () => setProjectToDelete(null),
     thumbnailUrls,
-    filteredAndSortedComics,
+    filteredAndSortedProjects,
   };
 };
 

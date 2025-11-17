@@ -3,23 +3,17 @@ import { SparklesIcon } from './Icons';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import {
-  generateCharacterSheet,
-  updateCharacterDescription,
-  setGenerationStep,
+  generatePropSheet,
+  updatePropDescription,
 } from '../features/generationSlice';
-import { Character, ProjectGenerationState } from '../types';
-import PoseLibrary from './PoseLibrary';
+import { WorldAsset } from '../types';
 
-const CharacterCard: React.FC<{ character: Character }> = ({
-  character,
-}) => {
+const PropCard: React.FC<{ prop: WorldAsset }> = ({ prop }) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { originalFullText } = useAppSelector((state) => state.generation.project ?? {});
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-
-  if (!character) return null;
 
   const handleGenerate = async () => {
     setIsLoading(true);
@@ -29,7 +23,7 @@ const CharacterCard: React.FC<{ character: Character }> = ({
         throw new Error("Project text not found.");
       }
       await dispatch(
-        generateCharacterSheet({ characterName: character.name, context: originalFullText }),
+        generatePropSheet({ propName: prop.name, context: originalFullText }),
       ).unwrap();
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -42,29 +36,20 @@ const CharacterCard: React.FC<{ character: Character }> = ({
     }
   };
 
-  const handleDescriptionChange = (
-    e: React.FocusEvent<HTMLTextAreaElement>,
-  ) => {
-    if (character) {
-      dispatch(
-        updateCharacterDescription({
-          name: character.name,
-          description: e.target.value,
-        }),
-      );
-    }
+  const handleDescriptionChange = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    dispatch(updatePropDescription({ name: prop.name, description: e.target.value }));
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 flex flex-col gap-4 border border-gray-300 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 flex flex-col items-center gap-4 border border-gray-300 dark:border-gray-700">
       <h3 className="text-xl font-bold text-indigo-600 dark:text-indigo-300">
-        {character.name}
+        {prop.name}
       </h3>
-      <div className="w-40 h-40 sm:w-48 sm:h-48 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center self-center">
-        {character.referenceImageUrl ? (
+      <div className="w-full aspect-square bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center">
+        {prop.referenceImageUrl ? (
           <img
-            src={character.referenceImageUrl}
-            alt={`${t('character.referenceFor')} ${character.name}`}
+            src={prop.referenceImageUrl}
+            alt={`${t('prop.referenceFor')} ${prop.name}`}
             className="w-full h-full object-cover rounded-md"
           />
         ) : (
@@ -74,11 +59,11 @@ const CharacterCard: React.FC<{ character: Character }> = ({
         )}
       </div>
       <textarea
-        defaultValue={character.description}
+        defaultValue={prop.description}
         onBlur={handleDescriptionChange}
-        placeholder={t('character.descriptionPlaceholder')}
+        placeholder={t('prop.descriptionPlaceholder')}
         className="w-full h-28 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-        aria-label={`${t('character.descriptionFor')} ${character.name}`}
+        aria-label={`${t('prop.descriptionFor')} ${prop.name}`}
       />
       <button
         onClick={handleGenerate}
@@ -91,58 +76,52 @@ const CharacterCard: React.FC<{ character: Character }> = ({
             {t('common.generating')}
           </>
         ) : (
-          t('character.generateAppearance')
+          t('prop.generateAppearance')
         )}
       </button>
-      {error && (
-        <p className="text-red-500 dark:text-red-400 text-xs mt-1">{error}</p>
-      )}
-      <PoseLibrary character={character} />
+      {error && <p className="text-red-500 dark:text-red-400 text-xs mt-1">{error}</p>}
     </div>
   );
 };
 
-const CharacterDefinition: React.FC<{ onProceed: () => void }> = ({ onProceed }) => {
+const PropDefinition: React.FC<{ onProceed: () => void }> = ({ onProceed }) => {
   const { t } = useTranslation();
-  const dispatch = useAppDispatch();
-  const { characters } = useAppSelector(
-    (state) => ({
-      characters: state.generation.project?.worldDB.characters || [],
-    }),
+  const { props } = useAppSelector(
+    (state) => state.generation.project?.worldDB || { props: [] }
   );
 
-  const allCharactersDefined = characters.every((c) => c.referenceImageUrl && c.description);
+  const allPropsDefined = props.every((p) => p.referenceImageUrl && p.description);
 
   return (
     <div className="w-full">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-600 dark:from-purple-400 dark:to-indigo-500 flex items-center justify-center gap-3">
           <SparklesIcon className="w-8 h-8" />
-          {t('character.defineTitle')}
+          {t('prop.defineTitle')}
         </h2>
         <p className="text-gray-600 dark:text-gray-400 mt-2">
-          {t('character.defineSubtitle')}
+          {t('prop.defineSubtitle')}
         </p>
       </div>
 
-      {characters.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {characters.map((char) => (
-            <CharacterCard key={char.name} character={char} />
+      {props.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {props.map((prop) => (
+            <PropCard key={prop.name} prop={prop} />
           ))}
         </div>
       ) : (
         <p className="text-center text-gray-500">
-          {t('character.noneDetected')}
+          No key props detected.
         </p>
       )}
 
-       <div className="mt-10 flex justify-end">
+      <div className="mt-10 flex justify-end">
         <button
           onClick={onProceed}
-          disabled={!allCharactersDefined && characters.length > 0}
+          disabled={!allPropsDefined && props.length > 0}
           className="py-3 px-6 bg-indigo-600 rounded-lg text-lg font-bold text-white transition-all duration-300 shadow-lg hover:bg-indigo-700 disabled:bg-gray-500 dark:disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50 transform hover:scale-105"
-          title={!allCharactersDefined ? "Define all characters before proceeding" : ""}
+          title={!allPropsDefined ? "Define all props before proceeding" : ""}
         >
           {t('worldBuilding.proceed')}
         </button>
@@ -151,4 +130,4 @@ const CharacterDefinition: React.FC<{ onProceed: () => void }> = ({ onProceed })
   );
 };
 
-export default CharacterDefinition;
+export default PropDefinition;

@@ -57,6 +57,23 @@ if (workbox) {
     })
   );
 
+  // Cache the Gutendex API calls to speed up library browsing
+  registerRoute(
+    ({url}) => url.origin === 'https://gutendex.com',
+    new StaleWhileRevalidate({
+      cacheName: 'gutendex-api-cache',
+      plugins: [
+        new CacheableResponsePlugin({
+          statuses: [0, 200],
+        }),
+        new ExpirationPlugin({
+          maxAgeSeconds: 60 * 60 * 24, // Cache for one day
+          maxEntries: 20,
+        }),
+      ],
+    })
+  );
+
   // Cache app shell (HTML, JS, manifest) using a Stale-While-Revalidate strategy.
   // This ensures the app loads quickly from cache while updating in the background.
   registerRoute(

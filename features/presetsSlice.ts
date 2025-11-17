@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as dbService from '../services/db';
 import type { Preset, GenerationSettings } from '../types';
 import { updateGenerationSettings } from './settingsSlice';
+import { addToast } from './uiSlice';
 import { AppDispatch } from '../app/store';
 
 export const loadPresets = createAsyncThunk<
@@ -19,26 +20,33 @@ export const loadPresets = createAsyncThunk<
 export const savePreset = createAsyncThunk<
   Preset,
   { name: string; settings: GenerationSettings },
-  { rejectValue: string }
->('presets/savePreset', async ({ name, settings }, { rejectWithValue }) => {
+  { rejectValue: string; dispatch: AppDispatch }
+>('presets/savePreset', async ({ name, settings }, { rejectWithValue, dispatch }) => {
   try {
     const newPreset: Omit<Preset, 'id'> = { name, ...settings };
-    return await dbService.savePreset(newPreset);
+    const saved = await dbService.savePreset(newPreset);
+    dispatch(addToast({ message: `Preset "${saved.name}" saved!`, type: 'success' }));
+    return saved;
   } catch (err: unknown) {
-    return rejectWithValue('Failed to save preset.');
+    const message = 'Failed to save preset.';
+    dispatch(addToast({ message, type: 'error' }));
+    return rejectWithValue(message);
   }
 });
 
 export const deletePreset = createAsyncThunk<
   number,
   number,
-  { rejectValue: string }
->('presets/deletePreset', async (id, { rejectWithValue }) => {
+  { rejectValue: string; dispatch: AppDispatch }
+>('presets/deletePreset', async (id, { rejectWithValue, dispatch }) => {
   try {
     await dbService.deletePreset(id);
+    dispatch(addToast({ message: `Preset deleted.`, type: 'success' }));
     return id;
   } catch (err: unknown) {
-    return rejectWithValue('Failed to delete preset.');
+    const message = 'Failed to delete preset.';
+    dispatch(addToast({ message, type: 'error' }));
+    return rejectWithValue(message);
   }
 });
 
@@ -47,6 +55,7 @@ export const applyPreset = createAsyncThunk<void, Preset, { dispatch: AppDispatc
   async (preset, { dispatch }) => {
     const { id, name, ...generationSettings } = preset;
     dispatch(updateGenerationSettings(generationSettings));
+    dispatch(addToast({ message: `Preset "${name}" applied.`, type: 'info' }));
   },
 );
 

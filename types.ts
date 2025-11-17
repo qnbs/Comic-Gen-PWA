@@ -1,11 +1,11 @@
-export enum GenerationState {
-  IDLE = 'IDLE',
-  SEGMENTING_SCENES = 'SEGMENTING_SCENES',
-  ANALYZING_TEXT = 'ANALYZING_TEXT',
-  REVIEW_SCENES = 'REVIEW_SCENES',
-  CHARACTER_DEFINITION = 'CHARACTER_DEFINITION',
-  GENERATING_IMAGES = 'GENERATING_IMAGES',
-  COMPOSING = 'COMPOSING',
+export enum ProjectGenerationState {
+  PROJECT_SETUP = 'PROJECT_SETUP',
+  GLOBAL_ANALYSIS = 'GLOBAL_ANALYSIS', // New step for overall book analysis
+  CHAPTER_REVIEW = 'CHAPTER_REVIEW',
+  WORLD_BUILDING = 'WORLD_BUILDING', // New pre-production step
+  PAGE_LAYOUT = 'PAGE_LAYOUT',
+  GENERATING_PAGES = 'GENERATING_PAGES',
+  VIEWING_PAGES = 'VIEWING_PAGES',
   DONE = 'DONE',
   ERROR = 'ERROR',
 }
@@ -14,15 +14,38 @@ export interface Scene {
   originalText: string;
   summary: string;
   characters: string[];
+  props: string[];
   dialogue: string;
   visualPrompt: string;
   actionScore: number;
+}
+
+export interface Pose {
+  id: string;
+  name: string; // e.g., "Angry", "Fighting Stance"
+  description: string;
+  referenceImageUrl: string | null;
 }
 
 export interface Character {
   name: string;
   description: string;
   referenceImageUrl: string | null;
+  poses: Pose[]; // The pose/expression library for this character
+}
+
+// NEW: For locations, props, etc.
+export interface WorldAsset {
+  name: string;
+  description: string;
+  referenceImageUrl: string | null;
+}
+
+// NEW: A database for all consistent visual elements
+export interface WorldDB {
+  characters: Character[];
+  locations: WorldAsset[];
+  props: WorldAsset[];
 }
 
 export interface PanelData {
@@ -33,13 +56,41 @@ export interface PanelData {
   height: number;
   imageUrl: string;
   dialogue: string;
-  // New properties for regeneration
-  sceneIndex: number;
+  sceneIndex: number; // Index within its chapter
   originalVisualPrompt: string;
+  // NEW: Fields for video and audio features
+  videoUrl?: string;
+  isVideo?: boolean;
+  audioUrl?: string;
 }
 
-export interface ComicPageData {
+export interface ComicBookPage {
+  pageNumber: number;
   panels: PanelData[];
+}
+
+// Add ComicPageData as an alias for ComicBookPage for backward compatibility with legacy comic handling.
+export type ComicPageData = ComicBookPage;
+
+// NEW: A chapter holds the text and its scene breakdown
+export interface Chapter {
+  chapterIndex: number;
+  title: string;
+  originalText: string;
+  scenes: Scene[];
+}
+
+// NEW: The core data structure for a full comic book project
+export interface ComicProject {
+  id: string;
+  title: string;
+  originalFullText: string;
+  createdAt: Date;
+  language: 'en' | 'de';
+  chapters: Chapter[];
+  worldDB: WorldDB;
+  pages: ComicBookPage[];
+  // Project-level settings can go here
 }
 
 export type LayoutAlgorithm =
@@ -65,6 +116,7 @@ export interface SpeechBubbleSettings {
   backgroundColor: string;
   textColor: string;
   opacity: number; // 0 to 1
+  ttsVoice: string; // NEW: For TTS voice selection
 }
 
 export interface PageBorderSettings {
@@ -93,26 +145,6 @@ export interface Preset extends GenerationSettings {
   name: string;
 }
 
-export interface StoredComic {
-  id: string;
-  title: string;
-  createdAt: Date;
-  page: ComicPageData;
-  language: 'en' | 'de';
-}
-
-export interface SavedProgress {
-  generationState: GenerationState;
-  originalText: string;
-  scenes: Scene[]; // Now represents the latest scenes after review
-  sceneHistory: Scene[][];
-  sceneHistoryIndex: number;
-  characterHistory: Character[][];
-  characterHistoryIndex: number;
-  timestamp: number;
-  language: 'en' | 'de';
-}
-
 // --- Type definitions for CDN-loaded libraries ---
 
 // For jsPDF v2.5.1 UMD
@@ -139,13 +171,13 @@ interface jsPDF {
   ): this;
   save(filename: string, options?: jsPDFOptions): Promise<void>;
   html(element: HTMLElement, options?: jsPDFHTMLOptions): Promise<void>;
+  addPage(): this;
 }
 
 // For html2canvas v1.4.1
 interface Html2CanvasOptions {
   scale?: number;
   useCORS?: boolean;
-  // FIX: Add backgroundColor property to align with html2canvas library options.
   backgroundColor?: string | null;
 }
 declare function html2canvas(
@@ -153,7 +185,16 @@ declare function html2canvas(
   options?: Html2CanvasOptions,
 ): Promise<HTMLCanvasElement>;
 
+// FIX: To resolve a "Subsequent property declarations must have the same type" error,
+// the AIStudio interface is moved inside `declare global`. This ensures it's treated
+// as a unique global type, preventing conflicts from module-scoped declarations.
 declare global {
+  // For Veo API key selection
+  interface AIStudio {
+    hasSelectedApiKey: () => Promise<boolean>;
+    openSelectKey: () => Promise<void>;
+  }
+
   interface Window {
     jspdf: {
       jsPDF: new (options?: {
@@ -163,5 +204,7 @@ declare global {
       }) => jsPDF;
     };
     html2canvas: typeof html2canvas;
+    aistudio?: AIStudio;
+    webkitAudioContext?: typeof AudioContext; // Add this for Safari compatibility
   }
 }

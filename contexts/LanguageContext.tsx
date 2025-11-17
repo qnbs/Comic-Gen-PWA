@@ -1,5 +1,7 @@
 import React from 'react';
 import { translations, TranslationKeys, en } from '../services/translations';
+import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { setLanguage as setLanguageAction } from '../features/uiSlice';
 
 type Language = 'en' | 'de';
 
@@ -19,18 +21,6 @@ export const LanguageContext = React.createContext<
 interface LanguageProviderProps {
   children: React.ReactNode;
 }
-
-const getInitialLanguage = (): Language => {
-  const savedLang = localStorage.getItem('comic-gen-lang');
-  if (savedLang === 'en' || savedLang === 'de') {
-    return savedLang;
-  }
-  const browserLang = navigator.language.split('-')[0];
-  if (browserLang === 'de') {
-    return 'de';
-  }
-  return 'en';
-};
 
 const getNestedValue = (
   obj: typeof en,
@@ -53,12 +43,11 @@ const getNestedValue = (
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   children,
 }) => {
-  const [language, setLanguageState] =
-    React.useState<Language>(getInitialLanguage);
+  const dispatch = useAppDispatch();
+  const language = useAppSelector((state) => state.ui.language);
 
   const setLanguage = (lang: Language) => {
-    localStorage.setItem('comic-gen-lang', lang);
-    setLanguageState(lang);
+    dispatch(setLanguageAction(lang));
   };
 
   const t = (

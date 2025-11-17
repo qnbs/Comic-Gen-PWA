@@ -28,7 +28,8 @@ export const useSettingsPage = () => {
   const dispatch = useAppDispatch();
   const settings = useAppSelector((state) => state.settings);
   const { theme } = useAppSelector((state) => state.ui);
-  const { savedProgress } = useAppSelector((state) => state.generation);
+  // The `savedProgress` property no longer exists; checking the `project` state is more appropriate now.
+  const { project } = useAppSelector((state) => state.generation);
   const presetsState = useAppSelector((state) => state.presets);
 
   const [activeTab, setActiveTab] = React.useState<SettingsTab>('generation');
@@ -168,7 +169,7 @@ export const useSettingsPage = () => {
   return {
     settings,
     theme,
-    savedProgress,
+    savedProgress: project, // Use the existence of a project to determine if there's a session.
     presets: presetsState.presets,
     activeTab,
     setActiveTab,

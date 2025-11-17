@@ -1,9 +1,15 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState, AppDispatch } from '../app/store';
-import JSZip from 'jszip';
+import { ComicProject } from '../types';
+import * as exportService from '../services/exportService';
 
 type Page = 'creator' | 'settings' | 'help' | 'library';
 type Theme = 'light' | 'dark';
+export interface Toast {
+  id: string;
+  message: string;
+  type: 'success' | 'error' | 'info';
+}
 
 const getInitialTheme = (): Theme => {
   const savedTheme = localStorage.getItem('comicGenTheme');
@@ -19,107 +25,58 @@ const getInitialTheme = (): Theme => {
   return 'dark'; // Default to dark mode
 };
 
-export const exportPageAsPdf = createAsyncThunk<
+export const exportProjectAsPdf = createAsyncThunk<
   void,
-  { pageElement: HTMLDivElement },
+  { project: ComicProject },
   { rejectValue: string; state: RootState; dispatch: AppDispatch }
 >(
-  'ui/exportPageAsPdf',
-  async ({ pageElement }, { dispatch, getState, rejectWithValue }) => {
-    const { originalText } = getState().generation;
-    if (!pageElement) {
-      return rejectWithValue('Comic page element not found.');
+  'ui/exportProjectAsPdf',
+  async ({ project }, { dispatch, getState, rejectWithValue }) => {
+    if (!project || project.pages.length === 0) {
+      const message = 'No pages in the project to export.';
+      dispatch(addToast({ message, type: 'error' }));
+      return rejectWithValue(message);
     }
     dispatch(setIsExportingPdf(true));
     try {
-      const canvas = await window.html2canvas(pageElement, {
-        scale: 2, // Increase scale for better resolution
-        useCORS: true,
-        backgroundColor: null, // Use transparent background to respect dark mode
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      // Use page dimensions for PDF format
-      const pdf = new window.jspdf.jsPDF({
-        orientation: 'p',
-        unit: 'px',
-        format: [pageElement.offsetWidth, pageElement.offsetHeight],
-      });
-
-      pdf.addImage(
-        imgData,
-        'PNG',
-        0,
-        0,
-        pageElement.offsetWidth,
-        pageElement.offsetHeight,
+      const { settings } = getState();
+      await exportService.exportProjectAsPdf(project, settings);
+      dispatch(
+        addToast({ message: 'PDF exported successfully!', type: 'success' }),
       );
-
-      const title = originalText.substring(0, 20) || 'comic';
-      const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-
-      await pdf.save(`${safeTitle}.pdf`, { returnPromise: true });
     } catch (err: unknown) {
       console.error('PDF Export failed:', err);
-      return rejectWithValue(
-        err instanceof Error ? err.message : 'Failed to export PDF.',
-      );
+      const message =
+        err instanceof Error ? err.message : 'Failed to export PDF.';
+      dispatch(addToast({ message, type: 'error' }));
+      return rejectWithValue(message);
     } finally {
       dispatch(setIsExportingPdf(false));
     }
   },
 );
 
-export const exportPanelsAsZip = createAsyncThunk<
+export const exportProjectAsCbz = createAsyncThunk<
   void,
-  void,
-  { rejectValue: string; state: RootState }
->('ui/exportPanelsAsZip', async (_, { dispatch, getState, rejectWithValue }) => {
-  const { comicPage, originalText } = getState().generation;
-  if (!comicPage) {
-    return rejectWithValue('No comic page available to export.');
+  { project: ComicProject },
+  { rejectValue: string; state: RootState; dispatch: AppDispatch }
+>('ui/exportProjectAsCbz', async ({ project }, { dispatch, getState, rejectWithValue }) => {
+  if (!project || project.pages.length === 0) {
+    const message = 'No pages available to export.';
+    dispatch(addToast({ message, type: 'error' }));
+    return rejectWithValue(message);
   }
-  dispatch(setIsExportingZip(true));
+  dispatch(setIsDownloading(true));
   try {
-    const zip = new JSZip();
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Could not get canvas context');
-
-    for (let i = 0; i < comicPage.panels.length; i++) {
-      const panel = comicPage.panels[i];
-      const response = await fetch(panel.imageUrl);
-      const jpegBlob = await response.blob();
-
-      const image = await createImageBitmap(jpegBlob);
-      canvas.width = image.width;
-      canvas.height = image.height;
-      ctx.drawImage(image, 0, 0);
-
-      const pngBlob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, 'image/png'),
-      );
-      if (!pngBlob) throw new Error(`Failed to convert panel ${i + 1} to PNG.`);
-
-      zip.file(`panel_${i + 1}.png`, pngBlob);
-    }
-
-    const title = originalText.substring(0, 20) || 'comic';
-    const zipBlob = await zip.generateAsync({ type: 'blob' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(zipBlob);
-    const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    link.download = `${safeTitle}_panels.zip`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
+    const { settings } = getState();
+    await exportService.exportProjectAsCbz(project, settings);
+    dispatch(addToast({ message: 'CBZ file downloaded!', type: 'success' }));
   } catch (err: unknown) {
-    return rejectWithValue(
-      err instanceof Error ? err.message : 'Failed to export panels as ZIP.',
-    );
+    const message = err instanceof Error ? err.message : 'Failed to export CBZ.';
+    dispatch(addToast({ message, type: 'error' }));
+    return rejectWithValue(message);
   } finally {
-    dispatch(setIsExportingZip(false));
+    dispatch(setIsDownloading(false));
   }
 });
 
@@ -128,8 +85,9 @@ interface UiState {
   theme: Theme;
   isDownloading: boolean;
   isExportingPdf: boolean;
-  isExportingZip: boolean;
+  isExportingZip: boolean; // Retain for potential single-panel zipping in future
   language: 'en' | 'de';
+  toasts: Toast[];
 }
 
 const getInitialLanguage = (): 'en' | 'de' => {
@@ -151,6 +109,7 @@ const initialState: UiState = {
   isExportingPdf: false,
   isExportingZip: false,
   language: getInitialLanguage(),
+  toasts: [],
 };
 
 const uiSlice = createSlice({
@@ -167,11 +126,21 @@ const uiSlice = createSlice({
       state.language = action.payload;
       localStorage.setItem('comic-gen-lang', action.payload);
     },
+    setIsDownloading(state, action: PayloadAction<boolean>) {
+      state.isDownloading = action.payload;
+    },
     setIsExportingZip(state, action: PayloadAction<boolean>) {
       state.isExportingZip = action.payload;
     },
     setIsExportingPdf(state, action: PayloadAction<boolean>) {
       state.isExportingPdf = action.payload;
+    },
+    addToast(state, action: PayloadAction<Omit<Toast, 'id'>>) {
+      const newToast = { id: new Date().toISOString() + Math.random(), ...action.payload };
+      state.toasts.push(newToast);
+    },
+    removeToast(state, action: PayloadAction<string>) {
+      state.toasts = state.toasts.filter(t => t.id !== action.payload);
     },
   },
 });
@@ -180,7 +149,10 @@ export const {
   setCurrentPage,
   setTheme,
   setLanguage,
+  setIsDownloading,
   setIsExportingZip,
   setIsExportingPdf,
+  addToast,
+  removeToast,
 } = uiSlice.actions;
 export default uiSlice.reducer;

@@ -7,7 +7,7 @@ const DataSettings: React.FC = () => {
     const { t } = useTranslation();
     const importSettingsRef = useRef<HTMLInputElement>(null);
     const {
-        savedProgress,
+        savedProgress: project,
         storageUsage,
         handleClearSession,
         handleClearAllData,
@@ -51,7 +51,7 @@ const DataSettings: React.FC = () => {
             <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-300 dark:border-yellow-700">
                 <h4 className="font-semibold mb-2 text-yellow-800 dark:text-yellow-300">{t('settingsPage.sessionManagement')}</h4>
                 <p className="text-sm text-yellow-700 dark:text-yellow-400 mb-3">{t('settingsPage.clearSessionDescription')}</p>
-                <button onClick={handleClearSession} disabled={!savedProgress} className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"><TrashIcon className="w-5 h-5" />{t('settingsPage.clearSession')}</button>
+                <button onClick={handleClearSession} disabled={!project} className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"><TrashIcon className="w-5 h-5" />{t('settingsPage.clearSession')}</button>
             </div>
             <div className="p-4 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-300 dark:border-red-700">
                 <h4 className="font-semibold mb-2 text-red-700 dark:text-red-400">{t('settingsPage.dataManagement')}</h4>

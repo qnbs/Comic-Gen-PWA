@@ -1,48 +1,31 @@
 import React from 'react';
 import type {
-  ComicPageData,
+  ComicBookPage,
   PanelData,
   AppSettings,
   SpeechBubbleSettings,
 } from '../types';
-import {
-  forceSimulation,
-  forceCollide,
-  forceManyBody,
-} from 'd3-force';
 import { useTranslation } from '../hooks/useTranslation';
-import { RefreshCwIcon } from './Icons';
+import { RefreshCwIcon, MoveIcon, VideoIcon, SpeakerWaveIcon, LoaderIcon } from './Icons';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
-import {
-  updatePanelDialogue,
-  regeneratePanel,
-} from '../features/generationSlice';
+import { updatePanelDialogue, updatePanelLayout, generateSpeechForPanel, generatePanelVideo } from '../features/generationSlice';
+import { addToast } from '../features/uiSlice';
 import RegeneratePanelModal from './RegeneratePanelModal';
+import { hexToRgb } from '../services/utils';
+import { decode, decodeAudioData } from '../services/audioUtils';
 
 interface SpeechBubbleProps {
-  dialogue: string;
+  panel: PanelData;
   x: number;
   y: number;
   width: number;
   settings: SpeechBubbleSettings;
   onDialogueChange: (newDialogue: string) => void;
+  isGeneratingAudio: boolean;
 }
 
-const hexToRgb = (
-  hex: string,
-): { r: number; g: number; b: number } | null => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
-    : null;
-};
-
 const SpeechBubble: React.FC<SpeechBubbleProps> = React.memo(
-  ({ dialogue, x, y, width, settings, onDialogueChange }) => {
+  ({ panel, x, y, width, settings, onDialogueChange, isGeneratingAudio }) => {
     const {
       fontSize,
       fontFamily,
@@ -52,8 +35,10 @@ const SpeechBubble: React.FC<SpeechBubbleProps> = React.memo(
       opacity,
     } = settings;
     const [isEditing, setIsEditing] = React.useState(false);
-    const [editedText, setEditedText] = React.useState(dialogue);
+    const [editedText, setEditedText] = React.useState(panel.dialogue);
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+    const dispatch = useAppDispatch();
+    const audioContextRef = React.useRef<AudioContext | null>(null);
 
     React.useEffect(() => {
       if (isEditing && textareaRef.current) {
@@ -63,7 +48,43 @@ const SpeechBubble: React.FC<SpeechBubbleProps> = React.memo(
       }
     }, [isEditing]);
 
-    if (!dialogue || dialogue.trim() === '') return null;
+    const playAudio = async (url: string) => {
+        try {
+            if (!audioContextRef.current) {
+                audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+            }
+            const audioContext = audioContextRef.current;
+            const response = await fetch(url);
+            const arrayBuffer = await response.arrayBuffer();
+            const audioBytes = new Uint8Array(arrayBuffer);
+            const audioBuffer = await decodeAudioData(audioBytes, audioContext, 24000, 1);
+            
+            const source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioContext.destination);
+            source.start();
+        } catch (error) {
+            console.error("Failed to play audio:", error);
+        }
+    };
+    
+    // Play audio when URL becomes available after generation
+    React.useEffect(() => {
+      if (panel.audioUrl && isGeneratingAudio) {
+        playAudio(panel.audioUrl);
+      }
+    }, [panel.audioUrl, isGeneratingAudio]);
+
+    const handleBubbleClick = () => {
+        if (isEditing) return;
+        if (panel.audioUrl) {
+            playAudio(panel.audioUrl);
+        } else if (!isGeneratingAudio) {
+            dispatch(generateSpeechForPanel({ panelId: panel.id, text: panel.dialogue }));
+        }
+    };
+
+    if (!panel.dialogue || panel.dialogue.trim() === '') return null;
 
     const bubbleClasses = React.useMemo(() => {
       switch (style) {
@@ -78,7 +99,7 @@ const SpeechBubble: React.FC<SpeechBubbleProps> = React.memo(
     }, [style]);
 
     const handleSave = () => {
-      if (editedText !== dialogue) {
+      if (editedText !== panel.dialogue) {
         onDialogueChange(editedText);
       }
       setIsEditing(false);
@@ -90,7 +111,7 @@ const SpeechBubble: React.FC<SpeechBubbleProps> = React.memo(
         handleSave();
       }
       if (e.key === 'Escape') {
-        setEditedText(dialogue);
+        setEditedText(panel.dialogue);
         setIsEditing(false);
       }
     };
@@ -108,7 +129,7 @@ const SpeechBubble: React.FC<SpeechBubbleProps> = React.memo(
 
     return (
       <div
-        className={`absolute p-2 shadow-md ${bubbleClasses} transition-transform duration-300 hover:scale-105 cursor-text`}
+        className={`absolute p-2 shadow-md ${bubbleClasses} transition-transform duration-300 hover:scale-105 cursor-pointer`}
         style={{
           left: `${x}px`,
           top: `${y}px`,
@@ -120,29 +141,39 @@ const SpeechBubble: React.FC<SpeechBubbleProps> = React.memo(
             : 'rgba(255, 255, 255, 0.9)',
           color: textColor,
         }}
-        onClick={() => !isEditing && setIsEditing(true)}
+        onClick={handleBubbleClick}
+        onDoubleClick={() => !isEditing && setIsEditing(true)}
       >
-        {isEditing ? (
-          <textarea
-            ref={textareaRef}
-            value={editedText}
-            onChange={handleTextareaChange}
-            onBlur={handleSave}
-            onKeyDown={handleKeyDown}
-            style={{ fontSize: `${fontSize}px`, fontFamily: fontFamily }}
-            className="bg-transparent border-none focus:outline-none focus:ring-0 resize-none w-full overflow-hidden"
-          />
-        ) : (
-          <p
-            style={{
-              hyphens: 'auto',
-              fontSize: `${fontSize}px`,
-              fontFamily: fontFamily,
-            }}
-          >
-            {dialogue}
-          </p>
-        )}
+        <div className="flex items-start gap-2">
+            <div className="flex-grow">
+                {isEditing ? (
+                  <textarea
+                    ref={textareaRef}
+                    value={editedText}
+                    onChange={handleTextareaChange}
+                    onBlur={handleSave}
+                    onKeyDown={handleKeyDown}
+                    style={{ fontSize: `${fontSize}px`, fontFamily: fontFamily }}
+                    className="bg-transparent border-none focus:outline-none focus:ring-0 resize-none w-full overflow-hidden"
+                  />
+                ) : (
+                  <p
+                    style={{
+                      hyphens: 'auto',
+                      fontSize: `${fontSize}px`,
+                      fontFamily: fontFamily,
+                    }}
+                  >
+                    {panel.dialogue}
+                  </p>
+                )}
+            </div>
+            {isGeneratingAudio ? (
+                <LoaderIcon className="w-4 h-4 animate-spin flex-shrink-0" />
+            ) : (
+                <SpeakerWaveIcon className="w-4 h-4 opacity-50 flex-shrink-0" />
+            )}
+        </div>
         <div
           className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent"
           style={{
@@ -163,6 +194,9 @@ interface PanelProps {
   speechBubbleSettings: SpeechBubbleSettings;
   onRegenerateClick: (panel: PanelData) => void;
   isRegenerating: boolean;
+  isVideoGenerating: boolean;
+  isAudioGenerating: boolean;
+  pageNumber: number;
 }
 
 const Panel: React.FC<PanelProps> = React.memo(
@@ -173,11 +207,115 @@ const Panel: React.FC<PanelProps> = React.memo(
     speechBubbleSettings,
     onRegenerateClick,
     isRegenerating,
+    isVideoGenerating,
+    isAudioGenerating,
+    pageNumber,
   }) => {
     const [isVisible, setIsVisible] = React.useState(false);
     const panelRef = React.useRef<HTMLDivElement>(null);
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
+    const { aspectRatio } = useAppSelector(state => state.settings.generation);
+
+    const [currentLayout, setCurrentLayout] = React.useState({
+      x: panel.x,
+      y: panel.y,
+      width: panel.width,
+      height: panel.height,
+    });
+
+    const interactionRef = React.useRef<{
+      type: 'move' | 'resize';
+      startX: number;
+      startY: number;
+      startPanelX: number;
+      startPanelY: number;
+      startPanelWidth: number;
+      startPanelHeight: number;
+    } | null>(null);
+
+    React.useEffect(() => {
+        setCurrentLayout({
+            x: panel.x,
+            y: panel.y,
+            width: panel.width,
+            height: panel.height,
+        });
+    }, [panel.x, panel.y, panel.width, panel.height]);
+
+    const handleInteractionStart = (e: React.MouseEvent<HTMLDivElement>, type: 'move' | 'resize') => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        interactionRef.current = {
+            type,
+            startX: e.clientX,
+            startY: e.clientY,
+            startPanelX: currentLayout.x,
+            startPanelY: currentLayout.y,
+            startPanelWidth: currentLayout.width,
+            startPanelHeight: currentLayout.height,
+        };
+        document.body.style.cursor = type === 'move' ? 'move' : 'nwse-resize';
+        document.body.style.userSelect = 'none';
+
+        window.addEventListener('mousemove', handleInteractionMove);
+        window.addEventListener('mouseup', handleInteractionEnd);
+    };
+
+    const handleInteractionMove = (e: MouseEvent) => {
+        if (!interactionRef.current) return;
+        
+        const deltaX = e.clientX - interactionRef.current.startX;
+        const deltaY = e.clientY - interactionRef.current.startY;
+
+        if (interactionRef.current.type === 'move') {
+            setCurrentLayout(prev => ({
+                ...prev,
+                x: interactionRef.current!.startPanelX + deltaX,
+                y: interactionRef.current!.startPanelY + deltaY,
+            }));
+        } else { // resize
+            setCurrentLayout(prev => ({
+                ...prev,
+                width: Math.max(100, interactionRef.current!.startPanelWidth + deltaX),
+                height: Math.max(100, interactionRef.current!.startPanelHeight + deltaY),
+            }));
+        }
+    };
+    
+    const handleInteractionEnd = () => {
+        window.removeEventListener('mousemove', handleInteractionMove);
+        window.removeEventListener('mouseup', handleInteractionEnd);
+        
+        document.body.style.cursor = 'default';
+        document.body.style.userSelect = 'auto';
+
+        setCurrentLayout(latestLayout => {
+            dispatch(updatePanelLayout({ pageNumber, panelId: panel.id, layout: latestLayout }));
+            return latestLayout;
+        });
+        
+        interactionRef.current = null;
+    };
+
+    const handleGenerateVideo = async () => {
+        if (!window.confirm("Generating a video panel uses the Veo model, which is a paid feature that may take several minutes. Do you want to continue? For billing information, visit ai.google.dev/gemini-api/docs/billing")) {
+            return;
+        }
+        try {
+            if (window.aistudio && typeof window.aistudio.hasSelectedApiKey === 'function') {
+                const hasKey = await window.aistudio.hasSelectedApiKey();
+                if (!hasKey) {
+                    await window.aistudio.openSelectKey();
+                }
+            }
+            dispatch(generatePanelVideo({ panelId: panel.id, prompt: panel.originalVisualPrompt }));
+        } catch (e) {
+            console.error("API Key selection error:", e);
+            dispatch(addToast({ type: 'info', message: 'API Key selection is required for video generation.' }));
+        }
+    };
 
     React.useEffect(() => {
       const observer = new IntersectionObserver(
@@ -211,23 +349,35 @@ const Panel: React.FC<PanelProps> = React.memo(
 
     const handleDialogueChange = React.useCallback(
       (newDialogue: string) => {
-        dispatch(updatePanelDialogue({ panelId: panel.id, newDialogue }));
+        dispatch(updatePanelDialogue({ pageNumber, panelId: panel.id, newDialogue }));
       },
-      [dispatch, panel.id],
+      [dispatch, panel.id, pageNumber],
     );
+
+    const isLoading = isRegenerating || isVideoGenerating;
 
     return (
       <div
         ref={panelRef}
-        className="absolute bg-gray-300 dark:bg-gray-700 rounded-lg overflow-hidden shadow-lg transition-transform duration-300 ease-in-out group"
+        className="absolute bg-gray-300 dark:bg-gray-700 rounded-lg overflow-hidden shadow-lg group"
         style={{
-          left: `${panel.x}px`,
-          top: `${panel.y}px`,
-          width: `${panel.width}px`,
-          height: `${panel.height}px`,
+          left: `${currentLayout.x}px`,
+          top: `${currentLayout.y}px`,
+          width: `${currentLayout.width}px`,
+          height: `${currentLayout.height}px`,
+          transition: interactionRef.current ? 'none' : 'all 0.2s ease-in-out',
         }}
       >
-        {isVisible ? (
+        {isVisible && panel.videoUrl ? (
+            <video
+                src={panel.videoUrl}
+                className="w-full h-full object-cover"
+                autoPlay
+                loop
+                muted
+                playsInline
+            />
+        ) : isVisible ? (
           <img
             src={panel.imageUrl}
             alt={altText}
@@ -236,31 +386,56 @@ const Panel: React.FC<PanelProps> = React.memo(
         ) : (
           <div className="w-full h-full bg-gray-200 dark:bg-gray-600 animate-pulse" />
         )}
+
         {isVisible && showSpeechBubbles && bubblePosition && (
           <SpeechBubble
-            dialogue={panel.dialogue}
+            panel={panel}
             x={bubblePosition.x}
             y={bubblePosition.y}
-            width={panel.width * 0.8}
+            width={currentLayout.width * 0.8}
             settings={speechBubbleSettings}
             onDialogueChange={handleDialogueChange}
+            isGeneratingAudio={isAudioGenerating}
           />
         )}
-        {isRegenerating && (
-          <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-            <div className="w-10 h-10 border-4 border-t-transparent border-white rounded-full animate-spin"></div>
+        {isLoading && (
+          <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white p-4 text-center">
+            <div className="w-10 h-10 border-4 border-t-transparent border-white rounded-full animate-spin mb-4"></div>
+            <p className="font-semibold">{isRegenerating ? "Regenerating Image..." : "Generating Video..."}</p>
+            {isVideoGenerating && <p className="text-sm mt-2">This can take several minutes. Please be patient.</p>}
           </div>
         )}
-        {!isRegenerating && (
-          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-            <button
-              onClick={() => onRegenerateClick(panel)}
-              className="p-3 bg-white/80 text-gray-900 rounded-full hover:bg-white backdrop-blur-sm transition-transform hover:scale-110"
-              aria-label={t('comic.regeneratePanelAria')}
+        {!isLoading && (
+          <>
+            <div
+                className="panel-handle panel-move-handle"
+                onMouseDown={(e) => handleInteractionStart(e, 'move')}
+                title="Move Panel"
             >
-              <RefreshCwIcon className="w-6 h-6" />
-            </button>
-          </div>
+                <MoveIcon className="w-5 h-5 text-gray-800" />
+            </div>
+            <div
+                className="panel-handle panel-resize-handle"
+                onMouseDown={(e) => handleInteractionStart(e, 'resize')}
+                title="Resize Panel"
+            />
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none gap-2">
+              <button
+                onClick={() => onRegenerateClick(panel)}
+                className="p-3 bg-white/80 text-gray-900 rounded-full hover:bg-white backdrop-blur-sm transition-transform hover:scale-110 pointer-events-auto"
+                aria-label={t('comic.regeneratePanelAria')}
+              >
+                <RefreshCwIcon className="w-6 h-6" />
+              </button>
+              <button
+                onClick={handleGenerateVideo}
+                className="p-3 bg-white/80 text-gray-900 rounded-full hover:bg-white backdrop-blur-sm transition-transform hover:scale-110 pointer-events-auto"
+                aria-label="Generate Video Panel"
+              >
+                <VideoIcon className="w-6 h-6" />
+              </button>
+            </div>
+          </>
         )}
       </div>
     );
@@ -268,24 +443,9 @@ const Panel: React.FC<PanelProps> = React.memo(
 );
 
 interface ComicPageProps {
-  page: ComicPageData;
+  page: ComicBookPage;
   settings: AppSettings;
   scale: number;
-}
-
-// FIX: Redefine SimulationNode to explicitly include properties from d3-force's SimulationNodeDatum.
-// This resolves TypeScript errors where 'x' and 'y' were reported as not existing on the type,
-// likely due to an issue with how the extended interface was being resolved.
-interface SimulationNode {
-  id: string;
-  panel: PanelData;
-  index?: number;
-  x?: number;
-  y?: number;
-  vx?: number;
-  vy?: number;
-  fx?: number | null;
-  fy?: number | null;
 }
 
 const ComicPage = React.forwardRef<HTMLDivElement, ComicPageProps>(
@@ -297,8 +457,7 @@ const ComicPage = React.forwardRef<HTMLDivElement, ComicPageProps>(
       React.useState<PanelData | null>(null);
 
     const { t } = useTranslation();
-    const dispatch = useAppDispatch();
-    const { panelRegenerationStatus } = useAppSelector(
+    const { panelRegenerationStatus, panelVideoGenerationStatus, panelAudioGenerationStatus } = useAppSelector(
       (state) => state.generation,
     );
 
@@ -308,7 +467,7 @@ const ComicPage = React.forwardRef<HTMLDivElement, ComicPageProps>(
     );
 
     React.useEffect(() => {
-      const urls = page.panels.map((p) => p.imageUrl);
+      const urls = page.panels.flatMap((p) => [p.imageUrl, p.videoUrl, p.audioUrl].filter(Boolean) as string[]);
       return () => {
         urls.forEach((url) => {
           if (url.startsWith('blob:')) {
@@ -317,56 +476,52 @@ const ComicPage = React.forwardRef<HTMLDivElement, ComicPageProps>(
         });
       };
     }, [page]);
-
+    
     React.useEffect(() => {
-      if (panelsWithDialogue.length === 0) return;
+      if (panelsWithDialogue.length === 0) {
+        setBubblePositions({});
+        return;
+      }
 
-      const nodes: SimulationNode[] = panelsWithDialogue.map((panel) => ({
-        id: panel.id,
-        panel: panel,
-        x: panel.x + panel.width / 2,
-        y: panel.y + 50,
+      // Create a new web worker to run the D3 simulation off the main thread.
+      // This prevents UI jank on pages with many dialogue bubbles.
+      const worker = new Worker(new URL('../services/speechBubbleWorker.ts', import.meta.url), {
+        type: 'module',
+      });
+
+      // Listen for the final calculated positions from the worker.
+      worker.onmessage = (event: MessageEvent<Record<string, { x: number; y: number }>>) => {
+        setBubblePositions(event.data);
+      };
+      
+      worker.onerror = (error) => {
+          console.error('Speech bubble worker error:', error);
+          // Optional: Implement a fallback to an on-thread method if the worker fails.
+      };
+
+      // Send only the necessary data to the worker to minimize data transfer.
+      const panelDataForWorker = panelsWithDialogue.map(p => ({
+          id: p.id,
+          x: p.x,
+          y: p.y,
+          width: p.width,
+          height: p.height,
       }));
 
-      const simulation = forceSimulation(nodes)
-        .force('collide', forceCollide().radius(60).strength(0.8))
-        .force('repel', forceManyBody().strength(-200))
-        .on('tick', () => {
-          nodes.forEach((node) => {
-            const panel = node.panel;
-            const radius = 30;
-            node.x = Math.max(
-              panel.x + radius,
-              Math.min(panel.x + panel.width - radius, node.x!),
-            );
-            node.y = Math.max(
-              panel.y + radius,
-              Math.min(panel.y + panel.height - radius - 20, node.y!),
-            );
-          });
-        })
-        .on('end', () => {
-          const finalPositions: Record<string, { x: number; y: number }> = {};
-          nodes.forEach((node) => {
-            finalPositions[node.id] = {
-              x: node.x! - node.panel.x,
-              y: node.y! - node.panel.y,
-            };
-          });
-          setBubblePositions(finalPositions);
-        });
+      worker.postMessage({ panelsWithDialogue: panelDataForWorker });
 
-      return () => simulation.stop();
+      // Terminate the worker when the component unmounts or dependencies change.
+      return () => {
+        worker.terminate();
+      };
     }, [panelsWithDialogue]);
+
 
     const { showSpeechBubbles, speechBubbles, generation } = settings;
     const { pageBorder } = generation;
 
-    const handleRegenerate = (newPrompt: string) => {
-      if (panelToRegenerate) {
-        dispatch(regeneratePanel({ panelId: panelToRegenerate.id, newPrompt }));
-        setPanelToRegenerate(null);
-      }
+    const handleRegenerateSuccess = () => {
+      setPanelToRegenerate(null);
     };
 
     return (
@@ -378,7 +533,7 @@ const ComicPage = React.forwardRef<HTMLDivElement, ComicPageProps>(
             width: '1100px',
             height: '1600px',
             transform: `scale(${scale})`,
-            transformOrigin: 'top left',
+            transformOrigin: 'top center',
             border: pageBorder.enabled
               ? `10px solid ${pageBorder.color}`
               : 'none',
@@ -397,6 +552,9 @@ const ComicPage = React.forwardRef<HTMLDivElement, ComicPageProps>(
               speechBubbleSettings={speechBubbles}
               onRegenerateClick={setPanelToRegenerate}
               isRegenerating={panelRegenerationStatus[panel.id] === 'loading'}
+              isVideoGenerating={panelVideoGenerationStatus[panel.id] === 'loading'}
+              isAudioGenerating={panelAudioGenerationStatus[panel.id] === 'loading'}
+              pageNumber={page.pageNumber}
             />
           ))}
         </div>
@@ -404,7 +562,7 @@ const ComicPage = React.forwardRef<HTMLDivElement, ComicPageProps>(
           <RegeneratePanelModal
             panel={panelToRegenerate}
             onClose={() => setPanelToRegenerate(null)}
-            onRegenerate={handleRegenerate}
+            onSuccess={handleRegenerateSuccess}
           />
         )}
       </>

@@ -60,25 +60,29 @@ export const exportProjectAsCbz = createAsyncThunk<
   void,
   { project: ComicProject },
   { rejectValue: string; state: RootState; dispatch: AppDispatch }
->('ui/exportProjectAsCbz', async ({ project }, { dispatch, getState, rejectWithValue }) => {
-  if (!project || project.pages.length === 0) {
-    const message = 'No pages available to export.';
-    dispatch(addToast({ message, type: 'error' }));
-    return rejectWithValue(message);
-  }
-  dispatch(setIsDownloading(true));
-  try {
-    const { settings } = getState();
-    await exportService.exportProjectAsCbz(project, settings);
-    dispatch(addToast({ message: 'CBZ file downloaded!', type: 'success' }));
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to export CBZ.';
-    dispatch(addToast({ message, type: 'error' }));
-    return rejectWithValue(message);
-  } finally {
-    dispatch(setIsDownloading(false));
-  }
-});
+>(
+  'ui/exportProjectAsCbz',
+  async ({ project }, { dispatch, getState, rejectWithValue }) => {
+    if (!project || project.pages.length === 0) {
+      const message = 'No pages available to export.';
+      dispatch(addToast({ message, type: 'error' }));
+      return rejectWithValue(message);
+    }
+    dispatch(setIsDownloading(true));
+    try {
+      const { settings } = getState();
+      await exportService.exportProjectAsCbz(project, settings);
+      dispatch(addToast({ message: 'CBZ file downloaded!', type: 'success' }));
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to export CBZ.';
+      dispatch(addToast({ message, type: 'error' }));
+      return rejectWithValue(message);
+    } finally {
+      dispatch(setIsDownloading(false));
+    }
+  },
+);
 
 interface UiState {
   currentPage: Page;
@@ -88,6 +92,10 @@ interface UiState {
   isExportingZip: boolean; // Retain for potential single-panel zipping in future
   language: 'en' | 'de';
   toasts: Toast[];
+  showOnboardingWizard: boolean;
+  onboardingWizardStep: number;
+  viewerZoomLevel: number;
+  saveStatus: 'idle' | 'saving' | 'saved' | 'error';
 }
 
 const getInitialLanguage = (): 'en' | 'de' => {
@@ -102,6 +110,14 @@ const getInitialLanguage = (): 'en' | 'de' => {
   return 'en';
 };
 
+const getInitialOnboardingState = (): boolean => {
+  try {
+    return !localStorage.getItem('comicGenOnboardingCompleted');
+  } catch {
+    return true; // Default to showing if localStorage fails
+  }
+};
+
 const initialState: UiState = {
   currentPage: 'creator',
   theme: getInitialTheme(),
@@ -110,6 +126,10 @@ const initialState: UiState = {
   isExportingZip: false,
   language: getInitialLanguage(),
   toasts: [],
+  showOnboardingWizard: getInitialOnboardingState(),
+  onboardingWizardStep: 0,
+  viewerZoomLevel: 1,
+  saveStatus: 'idle',
 };
 
 const uiSlice = createSlice({
@@ -136,11 +156,37 @@ const uiSlice = createSlice({
       state.isExportingPdf = action.payload;
     },
     addToast(state, action: PayloadAction<Omit<Toast, 'id'>>) {
-      const newToast = { id: new Date().toISOString() + Math.random(), ...action.payload };
+      const newToast = {
+        id: new Date().toISOString() + Math.random(),
+        ...action.payload,
+      };
       state.toasts.push(newToast);
     },
     removeToast(state, action: PayloadAction<string>) {
-      state.toasts = state.toasts.filter(t => t.id !== action.payload);
+      state.toasts = state.toasts.filter((t) => t.id !== action.payload);
+    },
+    setShowOnboardingWizard(state, action: PayloadAction<boolean>) {
+      state.showOnboardingWizard = action.payload;
+      if (!action.payload) {
+        // If hiding, mark as completed
+        try {
+          localStorage.setItem('comicGenOnboardingCompleted', 'true');
+        } catch (e: unknown) {
+          console.error('Could not save onboarding status to local storage', e);
+        }
+      }
+    },
+    setOnboardingWizardStep(state, action: PayloadAction<number>) {
+      state.onboardingWizardStep = action.payload;
+    },
+    setViewerZoomLevel(state, action: PayloadAction<number>) {
+      state.viewerZoomLevel = Math.max(0.25, Math.min(action.payload, 4));
+    },
+    setSaveStatus(
+      state,
+      action: PayloadAction<'idle' | 'saving' | 'saved' | 'error'>,
+    ) {
+      state.saveStatus = action.payload;
     },
   },
 });
@@ -154,5 +200,9 @@ export const {
   setIsExportingPdf,
   addToast,
   removeToast,
+  setShowOnboardingWizard,
+  setOnboardingWizardStep,
+  setViewerZoomLevel,
+  setSaveStatus,
 } = uiSlice.actions;
 export default uiSlice.reducer;

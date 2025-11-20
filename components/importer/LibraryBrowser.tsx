@@ -1,77 +1,74 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
-import { useAppSelector } from '../../app/hooks';
-import { fetchPublicBooks, LibraryBook } from '../../services/gutendexService';
-import BookCard from './BookCard';
-import { BookOpenIcon } from '../Icons';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { fetchLocalBooks } from '../../features/gutenbergSlice';
+import MyBooksTab from './MyBooksTab';
+import OnlineLibraryBrowser from './OnlineLibraryBrowser';
+import BookDetailView from './BookDetailView';
+import { BookOpenIcon, SearchIcon } from '../Icons';
+
+type LibraryTab = 'local' | 'online';
+
+const TabButton: React.FC<{
+  tabId: LibraryTab;
+  activeTab: LibraryTab;
+  onClick: (tabId: LibraryTab) => void;
+  label: string;
+  icon: React.ReactNode;
+}> = ({ tabId, activeTab, onClick, label, icon }) => (
+  <button
+    onClick={() => onClick(tabId)}
+    className={`flex-1 py-3 font-semibold transition-all duration-300 text-sm sm:text-base flex items-center justify-center gap-2 ${
+      activeTab === tabId
+        ? 'text-indigo-600 dark:text-indigo-300 border-b-2 border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
+        : 'text-gray-500 dark:text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+    }`}
+  >
+    {icon}
+    {label}
+  </button>
+);
+
 
 const LibraryBrowser: React.FC = () => {
   const { t } = useTranslation();
-  const { language } = useAppSelector((state) => state.ui);
-  const [books, setBooks] = React.useState<LibraryBook[]>([]);
-  const [nextPageUrl, setNextPageUrl] = React.useState<string | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [isLoadingMore, setIsLoadingMore] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const { status, selectedBookId } = useAppSelector((state) => state.libraryBrowser);
+  const [activeTab, setActiveTab] = useState<LibraryTab>('local');
 
-  const loadBooks = React.useCallback(async (url?: string) => {
-    const loadingMore = !!url;
-    if (loadingMore) setIsLoadingMore(true);
-    else setIsLoading(true);
-    
-    setError(null);
-
-    try {
-      const { books: newBooks, nextPageUrl: nextUrl } = await fetchPublicBooks(language, url);
-      setBooks(prev => loadingMore ? [...prev, ...newBooks] : newBooks);
-      setNextPageUrl(nextUrl);
-    } catch (err) {
-      setError(t('importer.fetchError'));
-    } finally {
-      setIsLoading(false);
-      setIsLoadingMore(false);
+  useEffect(() => {
+    if (status === 'idle') {
+      dispatch(fetchLocalBooks());
     }
-  }, [language, t]);
-
-  React.useEffect(() => {
-    loadBooks();
-  }, [loadBooks]);
-
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="animate-pulse">
-            <div className="h-48 bg-gray-300 dark:bg-gray-700 rounded-lg"></div>
-            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded mt-2 w-3/4"></div>
-            <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded mt-1 w-1/2"></div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (error) {
-    return <p className="text-center text-red-500 dark:text-red-400">{error}</p>;
+  }, [status, dispatch]);
+  
+  if (selectedBookId) {
+    return <BookDetailView bookId={selectedBookId} />;
   }
 
   return (
-    <div>
-      <p className="text-center text-gray-600 dark:text-gray-400 text-sm mb-6">{t('importer.browseDescription')}</p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        {books.map(book => <BookCard key={book.id} book={book} />)}
-      </div>
-      {nextPageUrl && (
-        <div className="text-center mt-8">
-          <button 
-            onClick={() => loadBooks(nextPageUrl)}
-            disabled={isLoadingMore}
-            className="py-2 px-6 bg-gray-600 rounded-lg font-bold text-white transition-colors hover:bg-gray-700 disabled:bg-gray-500"
-          >
-            {isLoadingMore ? t('importer.loadingMore') : t('importer.loadMore')}
-          </button>
-        </div>
-      )}
+    <div className="space-y-6">
+       <div className="flex border-b border-gray-300 dark:border-gray-700">
+            <TabButton 
+                tabId="local" 
+                activeTab={activeTab} 
+                onClick={setActiveTab} 
+                label={t('importer.myLibrary')} 
+                icon={<BookOpenIcon className="w-5 h-5"/>}
+            />
+            <TabButton 
+                tabId="online" 
+                activeTab={activeTab} 
+                onClick={setActiveTab} 
+                label={t('importer.onlineSearch')} 
+                icon={<SearchIcon className="w-5 h-5"/>}
+            />
+       </div>
+
+       <div className="pt-2">
+        {activeTab === 'local' && <MyBooksTab />}
+        {activeTab === 'online' && <OnlineLibraryBrowser />}
+       </div>
     </div>
   );
 };

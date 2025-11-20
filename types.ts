@@ -1,3 +1,4 @@
+
 export enum ProjectGenerationState {
   PROJECT_SETUP = 'PROJECT_SETUP',
   GLOBAL_ANALYSIS = 'GLOBAL_ANALYSIS', // New step for overall book analysis
@@ -24,13 +25,13 @@ export interface Pose {
   id: string;
   name: string; // e.g., "Angry", "Fighting Stance"
   description: string;
-  referenceImageUrl: string | null;
+  referenceImageId: string | null; // Changed from referenceImageUrl
 }
 
 export interface Character {
   name: string;
   description: string;
-  referenceImageUrl: string | null;
+  referenceImageId: string | null; // Changed from referenceImageUrl
   poses: Pose[]; // The pose/expression library for this character
 }
 
@@ -38,7 +39,7 @@ export interface Character {
 export interface WorldAsset {
   name: string;
   description: string;
-  referenceImageUrl: string | null;
+  referenceImageId: string | null; // Changed from referenceImageUrl
 }
 
 // NEW: A database for all consistent visual elements
@@ -54,14 +55,12 @@ export interface PanelData {
   y: number;
   width: number;
   height: number;
-  imageUrl: string;
+  imageId: string; // ID referencing a blob in the media_blobs store
   dialogue: string;
-  sceneIndex: number; // Index within its chapter
+  sceneId: string; // Globally unique ID for the source scene (e.g., 'c0-s3')
   originalVisualPrompt: string;
-  // NEW: Fields for video and audio features
-  videoUrl?: string;
-  isVideo?: boolean;
-  audioUrl?: string;
+  videoId?: string; // ID referencing a video blob
+  audioId?: string; // ID referencing an audio blob
 }
 
 export interface ComicBookPage {
@@ -69,29 +68,41 @@ export interface ComicBookPage {
   panels: PanelData[];
 }
 
-// Add ComicPageData as an alias for ComicBookPage for backward compatibility with legacy comic handling.
-export type ComicPageData = ComicBookPage;
-
 // NEW: A chapter holds the text and its scene breakdown
 export interface Chapter {
   chapterIndex: number;
   title: string;
   originalText: string;
-  scenes: Scene[];
+  scenes: string[]; // Array of Scene IDs
+}
+
+// Metadata stored for quick library listing
+export interface ComicProjectMeta {
+  id: string;
+  title: string;
+  createdAt: Date;
+  thumbnailId?: string;
 }
 
 // NEW: The core data structure for a full comic book project
-export interface ComicProject {
-  id: string;
-  title: string;
+export interface ComicProject extends ComicProjectMeta {
   originalFullText: string;
-  createdAt: Date;
   language: 'en' | 'de';
   chapters: Chapter[];
   worldDB: WorldDB;
   pages: ComicBookPage[];
   // Project-level settings can go here
 }
+
+// NEW: Intermediate types for type-safe project creation
+export interface ChapterWithScenes extends Omit<Chapter, 'scenes'> {
+  scenes: Scene[];
+}
+
+export interface UnnormalizedComicProject extends Omit<ComicProject, 'chapters'> {
+  chapters: ChapterWithScenes[];
+}
+
 
 export type LayoutAlgorithm =
   | 'squarified'
@@ -101,13 +112,10 @@ export type LayoutAlgorithm =
   | 'column';
 export type ImageQuality = 'low' | 'medium' | 'high';
 export type AspectRatio = '1:1' | '4:3' | '3:4' | '16:9' | '9:16';
-export type ArtStyle =
-  | 'default'
-  | 'manga'
-  | 'noir'
-  | 'watercolor'
-  | 'cyberpunk';
+export type ArtStyle = string; // Changed from enum-like type to allow custom styles
 export type SpeechBubbleStyle = 'rounded' | 'sharp' | 'cloud';
+export type SpeechBubblePlacement = 'physics' | 'static';
+export type ImageModel = 'gemini-3-pro' | 'nano-banana' | 'imagen-4';
 
 export interface SpeechBubbleSettings {
   style: SpeechBubbleStyle;
@@ -115,8 +123,11 @@ export interface SpeechBubbleSettings {
   fontFamily: string;
   backgroundColor: string;
   textColor: string;
-  opacity: number; // 0 to 1
-  ttsVoice: string; // NEW: For TTS voice selection
+  strokeColor: string;
+  strokeWidth: number;
+  opacity: number;
+  ttsVoice: string;
+  placementAlgorithm: SpeechBubblePlacement;
 }
 
 export interface PageBorderSettings {
@@ -124,7 +135,27 @@ export interface PageBorderSettings {
   color: string;
 }
 
+export interface AdvancedGenerationSettings {
+  seed?: number | null;
+  temperature: number;
+  topK: number;
+  topP: number;
+}
+
+export interface GenerateImageConfig extends AdvancedGenerationSettings {
+  numberOfImages: number;
+  outputMimeType: 'image/jpeg';
+  aspectRatio: AspectRatio;
+  seed?: number; // Overwrite seed to be optional
+}
+
+export interface VideoSettings {
+  resolution: '720p' | '1080p';
+  motion: 'low' | 'medium' | 'high';
+}
+
 export interface GenerationSettings {
+  imageModel: ImageModel; // New field for model selection
   layoutAlgorithm: LayoutAlgorithm;
   imageQuality: ImageQuality;
   artStyle: ArtStyle;
@@ -132,18 +163,66 @@ export interface GenerationSettings {
   aspectRatio: AspectRatio;
   gutterWidth: number;
   pageBorder: PageBorderSettings;
+  panelDensity: 'low' | 'medium' | 'high';
+  advanced: AdvancedGenerationSettings;
+  video: VideoSettings;
+}
+
+export interface AccessibilitySettings {
+  reduceMotion: boolean;
+}
+
+export interface DataSettings {
+  autoSave: boolean;
 }
 
 export interface AppSettings {
   showSpeechBubbles: boolean;
   speechBubbles: SpeechBubbleSettings;
   generation: GenerationSettings;
+  accessibility: AccessibilitySettings;
+  data: DataSettings;
 }
 
 export interface Preset extends GenerationSettings {
   id?: number;
   name: string;
 }
+
+// NEW: Word Cloud Analysis types
+export interface WordCloudEntry {
+  text: string;
+  size: number;
+}
+export interface WordCloudAnalysis {
+  overall: WordCloudEntry[];
+  characters: { name: string; words: WordCloudEntry[] }[];
+  locations: { name: string; words: WordCloudEntry[] }[];
+  events: { name: string; words: WordCloudEntry[] }[];
+}
+
+export type LibrarySource = 'gutenberg' | 'openlibrary';
+
+// A generic book type for online libraries
+export interface LibraryBook {
+  id: string; // Gutenberg ID as string, or OpenLibrary work key
+  source: LibrarySource;
+  title: string;
+  author: string;
+  coverImageUrl?: string;
+  sourceUrl?: string;
+  // Source-specific fields
+  textUrl?: string; // Gutenberg, Wikimedia, or Google Books preview link
+  iaId?: string; // OpenLibrary Internet Archive ID
+  // Local fields
+  isLocal?: boolean;
+  fullText?: string;
+  // NEW: Fields for book management
+  notes?: string;
+  tags?: string[];
+  analysisCache?: WordCloudAnalysis | null;
+}
+
 
 // --- Type definitions for CDN-loaded libraries ---
 

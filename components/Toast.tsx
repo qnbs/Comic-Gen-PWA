@@ -70,4 +70,4 @@ const Toast: React.FC<ToastType> = ({ id, message, type }) => {
   );
 };
 
-export default Toast;
+export default React.memo(Toast);

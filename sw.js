@@ -1,3 +1,4 @@
+
 // sw.js
 
 // Import Workbox from CDN
@@ -56,23 +57,25 @@ if (workbox) {
       ],
     })
   );
-
-  // Cache the Gutendex API calls to speed up library browsing
-  registerRoute(
-    ({url}) => url.origin === 'https://gutendex.com',
-    new StaleWhileRevalidate({
-      cacheName: 'gutendex-api-cache',
+  
+  // Cache all online library API calls to speed up browsing and improve offline experience
+  const apiCacheStrategy = new StaleWhileRevalidate({
+      cacheName: 'online-library-api-cache',
       plugins: [
         new CacheableResponsePlugin({
-          statuses: [0, 200],
+          statuses: [0, 200], // Cache opaque responses for CORS requests
         }),
         new ExpirationPlugin({
           maxAgeSeconds: 60 * 60 * 24, // Cache for one day
-          maxEntries: 20,
+          maxEntries: 50,
         }),
       ],
-    })
-  );
+    });
+
+  registerRoute(({url}) => url.hostname === 'gutendex.com', apiCacheStrategy);
+  registerRoute(({url}) => url.hostname === 'openlibrary.org', apiCacheStrategy);
+  registerRoute(({url}) => url.hostname === 'archive.org', apiCacheStrategy);
+
 
   // Cache app shell (HTML, JS, manifest) using a Stale-While-Revalidate strategy.
   // This ensures the app loads quickly from cache while updating in the background.

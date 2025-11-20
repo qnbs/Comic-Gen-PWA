@@ -16,9 +16,12 @@
     "@google/genai": "^1.29.1",
     "d3-hierarchy": "^3.1.2",
     "d3-force": "^3.0.0",
+    "d3-cloud": "^1.2.7",
     "idb": "^8.0.0",
     "jszip": "^3.1.0",
-    "reselect": "^5.1.1"
+    "reselect": "^5.1.1",
+    "redux-undo": "^1.1.0",
+    "framer-motion": "^12.23.24"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

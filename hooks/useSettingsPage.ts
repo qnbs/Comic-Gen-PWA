@@ -1,26 +1,35 @@
 import React from 'react';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
-import { setTheme } from '../features/uiSlice';
+import { addToast, setTheme } from '../features/uiSlice';
 import {
-  updateSettings,
+  setSettings,
+  updateShowSpeechBubbles,
+  updateSpeechBubbleSettings,
   updateGenerationSettings,
+  updateAccessibilitySettings,
+  updateDataSettings,
 } from '../features/settingsSlice';
-import { clearAllData } from '../features/librarySlice';
-import { discardSession } from '../features/generationSlice';
+import { clearAllData, exportAllProjects, importProject } from '../features/librarySlice';
+import { discardSession } from '../features/projectSlice';
 import {
   loadPresets,
   savePreset,
   deletePreset,
   applyPreset,
 } from '../features/presetsSlice';
-import { AppSettings, GenerationSettings, Preset } from '../types';
+import {
+  AppSettings,
+  GenerationSettings,
+  SpeechBubbleSettings,
+  AccessibilitySettings,
+  DataSettings,
+  Preset,
+} from '../types';
 
 export type SettingsTab = 'generation' | 'general' | 'data';
 
 // Type guard to validate the structure of imported settings
 const isAppSettings = (obj: unknown): obj is Partial<AppSettings> => {
-  // This is a basic check. For more robustness, you could verify
-  // the presence and types of key properties.
   return typeof obj === 'object' && obj !== null;
 };
 
@@ -28,8 +37,7 @@ export const useSettingsPage = () => {
   const dispatch = useAppDispatch();
   const settings = useAppSelector((state) => state.settings);
   const { theme } = useAppSelector((state) => state.ui);
-  // The `savedProgress` property no longer exists; checking the `project` state is more appropriate now.
-  const { project } = useAppSelector((state) => state.generation);
+  const { project } = useAppSelector((state) => state.project.present);
   const presetsState = useAppSelector((state) => state.presets);
 
   const [activeTab, setActiveTab] = React.useState<SettingsTab>('generation');
@@ -55,7 +63,7 @@ export const useSettingsPage = () => {
             quota,
             percent: (usage / quota) * 100,
           });
-        } catch (error) {
+        } catch (error: unknown) {
           console.error('Could not estimate storage:', error);
         }
       }
@@ -63,9 +71,19 @@ export const useSettingsPage = () => {
     estimateStorage();
   }, []);
 
-  const handleSettingChange = React.useCallback(
-    <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
-      dispatch(updateSettings({ [key]: value }));
+  const handleShowSpeechBubblesChange = React.useCallback(
+    (value: boolean) => {
+      dispatch(updateShowSpeechBubbles(value));
+    },
+    [dispatch],
+  );
+
+  const handleSpeechBubbleSettingChange = React.useCallback(
+    <K extends keyof SpeechBubbleSettings>(
+      key: K,
+      value: SpeechBubbleSettings[K],
+    ) => {
+      dispatch(updateSpeechBubbleSettings({ [key]: value }));
     },
     [dispatch],
   );
@@ -80,20 +98,29 @@ export const useSettingsPage = () => {
     [dispatch],
   );
 
+  const handleAccessibilitySettingChange = React.useCallback(
+    <K extends keyof AccessibilitySettings>(
+      key: K,
+      value: AccessibilitySettings[K],
+    ) => {
+      dispatch(updateAccessibilitySettings({ [key]: value }));
+    },
+    [dispatch],
+  );
+
+  const handleDataSettingChange = React.useCallback(
+    <K extends keyof DataSettings>(key: K, value: DataSettings[K]) => {
+      dispatch(updateDataSettings({ [key]: value }));
+    },
+    [dispatch],
+  );
+
   const handleClearAllData = React.useCallback(() => {
-    if (
-      window.confirm(
-        'Are you sure you want to delete all data? This cannot be undone.',
-      )
-    ) {
-      dispatch(clearAllData());
-    }
+    dispatch(clearAllData());
   }, [dispatch]);
 
   const handleClearSession = React.useCallback(() => {
-    if (window.confirm('Are you sure you want to discard your current session?')) {
-      dispatch(discardSession());
-    }
+    dispatch(discardSession());
   }, [dispatch]);
 
   const handleExportSettings = React.useCallback(() => {
@@ -115,7 +142,7 @@ export const useSettingsPage = () => {
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = (e: ProgressEvent<FileReader>) => {
         try {
           const text = e.target?.result;
           if (typeof text !== 'string') {
@@ -124,11 +151,11 @@ export const useSettingsPage = () => {
           const importedSettings: unknown = JSON.parse(text);
 
           if (isAppSettings(importedSettings)) {
-            dispatch(updateSettings(importedSettings));
+            dispatch(setSettings(importedSettings));
           } else {
             throw new Error('Imported settings file has an invalid format.');
           }
-        } catch (error) {
+        } catch (error: unknown) {
           console.error('Failed to import settings:', error);
           alert('Failed to import settings. The file might be corrupt.');
         }
@@ -137,6 +164,32 @@ export const useSettingsPage = () => {
     },
     [dispatch],
   );
+
+   const handleExportAllData = React.useCallback(() => {
+    dispatch(addToast({ message: 'Preparing full backup...', type: 'info' }));
+    dispatch(exportAllProjects()).unwrap()
+        .then(() => {
+            dispatch(addToast({ message: 'Full backup exported.', type: 'success'}));
+        })
+        .catch((error: unknown) => {
+            dispatch(addToast({ message: String(error), type: 'error'}));
+        });
+  }, [dispatch]);
+
+  const handleImportProjects = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    dispatch(importProject(file)).unwrap()
+        .then((message) => {
+            dispatch(addToast({ message, type: 'success' }));
+        })
+        .catch((error: unknown) => {
+            dispatch(addToast({ message: String(error), type: 'error' }));
+        });
+    // Reset file input to allow re-importing the same file
+    event.target.value = '';
+  }, [dispatch]);
+
 
   const handleSavePreset = React.useCallback(
     (name: string) => {
@@ -169,18 +222,23 @@ export const useSettingsPage = () => {
   return {
     settings,
     theme,
-    savedProgress: project, // Use the existence of a project to determine if there's a session.
+    savedProgress: project,
     presets: presetsState.presets,
     activeTab,
     setActiveTab,
     storageUsage,
-    handleSettingChange,
+    handleShowSpeechBubblesChange,
+    handleSpeechBubbleSettingChange,
     handleGenerationSettingChange,
+    handleAccessibilitySettingChange,
+    handleDataSettingChange,
     handleThemeChange,
     handleClearAllData,
     handleClearSession,
     handleExportSettings,
     handleImportSettings,
+    handleExportAllData,
+    handleImportProjects,
     handleSavePreset,
     handleDeletePreset,
     handleApplyPreset,

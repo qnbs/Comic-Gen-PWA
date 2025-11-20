@@ -46,38 +46,47 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   const dispatch = useAppDispatch();
   const language = useAppSelector((state) => state.ui.language);
 
-  const setLanguage = (lang: Language) => {
-    dispatch(setLanguageAction(lang));
-  };
+  const setLanguage = React.useCallback(
+    (lang: Language) => {
+      dispatch(setLanguageAction(lang));
+    },
+    [dispatch],
+  );
 
-  const t = (
-    key: TranslationKeys,
-    replacements?: { [key: string]: string | number },
-  ): string => {
-    const keys = key.split('.');
-    let result = getNestedValue(translations[language], keys);
+  const t = React.useCallback(
+    (
+      key: TranslationKeys,
+      replacements?: { [key: string]: string | number },
+    ): string => {
+      const keys = key.split('.');
+      let result = getNestedValue(translations[language], keys);
 
-    if (result === undefined) {
-      // Fallback to English if translation is missing
-      result = getNestedValue(translations.en, keys);
-    }
+      if (result === undefined) {
+        // Fallback to English if translation is missing
+        result = getNestedValue(translations.en, keys);
+      }
 
-    if (result === undefined) {
-      return key; // Return key if not found anywhere
-    }
+      if (result === undefined) {
+        return key; // Return key if not found anywhere
+      }
 
-    if (replacements) {
-      return Object.entries(replacements).reduce((acc, [placeholder, value]) => {
-        return acc.replace(`{{${placeholder}}}`, String(value));
-      }, result);
-    }
+      if (replacements) {
+        return Object.entries(replacements).reduce(
+          (acc, [placeholder, value]) => {
+            return acc.replace(`{{${placeholder}}}`, String(value));
+          },
+          result,
+        );
+      }
 
-    return result;
-  };
+      return result;
+    },
+    [language],
+  );
 
   const value = React.useMemo(
     () => ({ language, setLanguage, t }),
-    [language],
+    [language, setLanguage, t],
   );
 
   return (

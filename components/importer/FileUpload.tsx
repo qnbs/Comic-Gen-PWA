@@ -3,7 +3,11 @@ import { UploadCloudIcon } from '../Icons';
 import { useTranslation } from '../../hooks/useTranslation';
 
 interface FileUploadProps {
-  onDataExtracted: (data: { title: string; text: string; error?: string | null }) => void;
+  onDataExtracted: (data: {
+    title: string;
+    text: string;
+    error?: string | null;
+  }) => void;
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({ onDataExtracted }) => {
@@ -21,7 +25,12 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataExtracted }) => {
         onDataExtracted({ text, title });
         setFile(selectedFile);
       };
-      reader.onerror = () => onDataExtracted({ title: '', text: '', error: t('importer.readFileError') });
+      reader.onerror = () =>
+        onDataExtracted({
+          title: '',
+          text: '',
+          error: t('importer.readFileError'),
+        });
       reader.readAsText(selectedFile);
     } else {
       onDataExtracted({ title: '', text: '', error: t('importer.uploadError') });
@@ -65,12 +74,20 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataExtracted }) => {
             : 'border-gray-400 dark:border-gray-600 hover:border-indigo-500'
         }`}
       >
-        <input ref={fileInputRef} type="file" accept=".txt" onChange={handleFileChange} className="hidden" />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".txt"
+          onChange={handleFileChange}
+          className="hidden"
+        />
         <UploadCloudIcon className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
         <p className="font-semibold text-lg text-gray-700 dark:text-gray-300">
           {file ? file.name : t('importer.dragAndDrop')}
         </p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{t('importer.uploadHint')}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {t('importer.uploadHint')}
+        </p>
       </div>
     </div>
   );

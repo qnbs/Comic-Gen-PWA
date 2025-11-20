@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppDispatch } from '../app/hooks';
-import { addPoseToCharacter } from '../features/generationSlice';
+import { addPoseToCharacter } from '../features/projectSlice';
 import { Character } from '../types';
 import PoseEditor from './PoseEditor';
 
@@ -9,13 +9,13 @@ interface PoseLibraryProps {
   character: Character;
 }
 
-const PoseLibrary: React.FC<PoseLibraryProps> = ({ character }) => {
+const PoseLibrary: React.FC<PoseLibraryProps> = React.memo(({ character }) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
 
-  const handleAddPose = () => {
+  const handleAddPose = React.useCallback(() => {
     dispatch(addPoseToCharacter({ characterName: character.name }));
-  };
+  }, [dispatch, character.name]);
 
   return (
     <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
@@ -33,6 +33,6 @@ const PoseLibrary: React.FC<PoseLibraryProps> = ({ character }) => {
       </button>
     </div>
   );
-};
+});
 
 export default PoseLibrary;

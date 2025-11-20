@@ -1,10 +1,9 @@
 import React from 'react';
 import { useComicLibraryContext } from '../../contexts/ComicLibraryContext';
 import ComicCard from './ComicCard';
-import { ComicProject } from '../../types';
 
 interface ComicGridProps {
-    onLoadProject: (project: ComicProject) => void;
+    onLoadProject: (projectId: string) => void;
 }
 
 const ComicGrid: React.FC<ComicGridProps> = ({ onLoadProject }) => {

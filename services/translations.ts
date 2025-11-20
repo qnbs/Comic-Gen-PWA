@@ -1,3 +1,4 @@
+
 const en = {
   app: {
     subtitle:
@@ -30,6 +31,53 @@ const en = {
     fetchError: 'Failed to fetch books from the library.',
     noTextFile: 'No text file available for "{{title}}".',
     downloadError: 'Failed to download the book text.',
+    myLibrary: 'My Library',
+    onlineSearch: 'Online Search',
+    deleteBook: 'Delete Book',
+    confirmDeleteBookTitle: 'Confirm Deletion',
+    confirmDeleteBookBody:
+      "Are you sure you want to permanently delete '{{title}}' from your local library?",
+    emptyLibrary: 'Your library is empty.',
+    emptyLibraryDesc:
+      'Download books from the "Online Search" tab to save them here for offline use.',
+    noResults: 'No books found for your query.',
+    searchBooks: 'Search for books or authors...',
+    clearSearch: 'Clear search',
+    saved: 'Saved',
+    addToLibrary: 'Add to Library',
+    source: 'Source',
+    gutenberg: 'Project Gutenberg',
+    openlibrary: 'OpenLibrary',
+    wikimedia: 'Wikimedia Commons',
+    googlebooks: 'Google Books',
+    dta: 'German Text Archive',
+    manageBook: 'Manage',
+    viewOnGoogleBooks: 'View on Google Books',
+    downloadFailed: 'Download Failed',
+  },
+  bookDetail: {
+    title: 'Book Workshop',
+    backToLibrary: 'Back to Library',
+    tabReader: 'Reader & Editor',
+    tabMetadata: 'Metadata',
+    tabAnalysis: 'AI Analysis',
+    exportText: 'Export .txt',
+    notes: 'Notes',
+    notesPlaceholder: 'Your personal notes about this work...',
+    tags: 'Tags / Keywords',
+    tagsPlaceholder: 'Add tags, separated by commas',
+    saveChanges: 'Save Changes',
+    changesSaved: 'Changes saved!',
+    wordCloudAnalysis: 'Word Cloud Analysis',
+    wordCloudDescription:
+      'Generate semantic word clouds to visualize the core themes, characters, and events of this work.',
+    generateAnalysis: 'Start Analysis',
+    generatingAnalysis: 'Analyzing...',
+    analysisError: 'Failed to generate analysis.',
+    overallWork: 'Overall Work',
+    keyCharacters: 'Key Characters',
+    keyLocations: 'Key Locations & World',
+    keyEvents: 'Key Events',
   },
   creatorWorkspace: {
     stepImport: 'Import',
@@ -112,6 +160,13 @@ const en = {
     tabLocations: 'Locations',
     tabProps: 'Props',
     proceed: 'Proceed to Page Layout',
+    addItem: 'Add Custom Item',
+    addItemPlaceholder: 'Name (e.g., "The Magic Sword")',
+    add: 'Add',
+    batchGenerate: 'Batch Generate Missing',
+    generatingBatch: 'Generating {{current}}/{{total}}...',
+    allGenerated: 'All items have images!',
+    complete: 'Batch generation complete!',
   },
   pageLayout: {
     title: 'Page Layout Editor',
@@ -172,13 +227,18 @@ const en = {
   settings: {
     title: 'Comic Settings',
     showSpeechBubbles: 'Show Speech Bubbles',
-    bubbleFontSize: 'Bubble Font Size',
-    bubbleFont: 'Bubble Font',
+    bubbleFontSize: 'Font Size',
+    bubbleFont: 'Font Family',
     fontBangers: 'Bangers (Comic)',
+    fontComicNeue: 'Comic Neue',
+    fontArchitectsDaughter: 'Architects Daughter',
     bubbleStyle: 'Bubble Style',
     styleRounded: 'Rounded',
     styleSharp: 'Sharp',
     styleCloud: 'Cloud',
+    bubbleColors: 'Colors (BG/Text/Stroke)',
+    bubbleOpacity: 'Opacity',
+    ttsVoice: 'TTS Voice',
     panelLayout: 'Panel Layout',
     layoutSquarified: 'Balanced',
     layoutStrip: 'Ordered',
@@ -205,6 +265,17 @@ const en = {
     used: 'used',
     storageWarning:
       'Warning: Storage is nearly full. You may not be able to save new comics.',
+    aiModelEngine: 'AI Model Engine',
+    aiModelDesc: 'Select the underlying AI model for image generation.',
+    modelGemini3: 'Gemini 3 Pro Image (Ultimate Quality)',
+    modelNano: '⚡ Nano Banana (Flash) - Turbo Mode',
+    modelImagen4: 'Imagen 4 (Legacy Control)',
+    advancedOptions: 'Advanced Generation Options',
+    pageComposition: 'Page Composition',
+    panelDensity: 'Panel Density',
+    videoGeneration: 'Video Generation',
+    resolution: 'Resolution',
+    motionLevel: 'Motion Level',
   },
   settingsPage: {
     title: 'App Settings',
@@ -234,80 +305,131 @@ const en = {
       'Are you sure you want to delete all data? This cannot be undone.',
     backButton: 'Back to Creator',
   },
+  projectOverview: {
+    chapters: 'Chapters',
+    totalScenes: 'Total Scenes',
+    characters: 'Characters',
+    pagesCreated: 'Pages Created',
+    getStarted: 'Get Started',
+    buildWorldTitle: '1. Build Your World',
+    buildWorldDesc: 'Define consistent characters and locations.',
+    layoutPageTitle: '2. Layout a Page',
+    layoutPageDesc: 'Compose scenes from a chapter into a comic page.',
+  },
   helpPage: {
-    title: 'Help & Information',
+    title: 'User Guide & Technical Reference',
     backButton: 'Back to Creator',
+    quickLinks: 'On This Page',
     introduction: {
       title: 'Introduction',
-      body: "Welcome to Comic-Gen PWA, a state-of-the-art tool designed to transform written narratives into visually stunning comic book pages. This application employs a sophisticated hybrid AI-algorithmic approach: it uses the creative power of Google's Gemini models for narrative interpretation and image generation, combined with deterministic algorithms for precise page layout and composition. This guide will walk you through mastering its features to bring your stories to life.",
+      body: 'Welcome to Comic-Gen PWA, a professional-grade studio for transforming written narratives into visually stunning comic books. This application is built on a sophisticated hybrid AI-algorithmic engine, designed to give you maximum creative control while automating the heavy lifting. This guide provides a comprehensive overview, from basic workflow to advanced techniques, to help you master the art of AI-assisted comic creation.',
     },
     workflow: {
       title: 'The Creative Workflow',
       step1: {
-        title: '1. Provide Your Text',
-        body: 'Your journey begins with the text. You can select a public domain classic, paste text from an online source, or upload your own .txt file. For best results, use narrative text with clear actions, descriptions, and characters. The AI will segment this text into a maximum of 6-8 key scenes to fit onto a single comic page.',
+        title: '1. Project Initialization',
+        body: 'Your journey begins with the text. Import a public domain classic, upload a `.txt` file, or paste your manuscript. The AI performs a global analysis, structuring your text into chapters and identifying key scenes, characters, locations, and props. This forms the foundation of your project.',
       },
       step2: {
-        title: '2. Script Review & Refinement',
-        body: "This is the most critical step for creative control. The AI presents a 'comic script' where it has interpreted each scene. Here you can edit the Visual Prompt, which is the direct instruction for the image generation AI. Be specific! You can also adjust the Action Score, which influences the final size of the panel—higher scores mean larger, more important panels.",
+        title: '2. World-Building',
+        body: 'This is a crucial pre-production step to establish a consistent "visual canon." In the World-Building Hub, you generate reference sheets for characters, locations, and props. By providing detailed descriptions and generating canonical images here, you anchor the AI\'s visual understanding, drastically reducing inconsistency in the final comic panels.',
       },
       step3: {
-        title: '3. Character Definition',
-        body: "To combat the common AI issue of inconsistent character appearances, this step allows you to create a visual baseline. For each character detected, you can generate a reference image and a detailed description. This 'character sheet' is then fed back into the AI for all subsequent image generations, drastically improving visual consistency across panels.",
+        title: '3. Script Review & Refinement',
+        body: 'The Script Review stage is your creative control center. The AI presents its interpretation of each scene, which you can refine. The most powerful tool here is the **Visual Prompt**. Editing this prompt allows you to direct the AI like a film director, specifying camera angles, character emotions, lighting, and composition to ensure the final art matches your vision.',
       },
       step4: {
-        title: '4. Generation & Export',
-        body: 'With your script and characters finalized, the engine generates all panel images and composes them onto the page using your selected layout algorithm. The final high-resolution comic page can then be customized with various settings and exported in multiple formats, including CBZ for comic readers, PDF for universal viewing, or a ZIP of individual panel images.',
+        title: '4. Page Layout & Generation',
+        body: 'In the Page Layout editor, you act as the page designer. Select scenes from a chapter to compose a single page. The app then uses a deterministic layout algorithm to arrange the panels based on their Action Score, creating a professional and narratively coherent page.',
+      },
+      step5: {
+        title: '5. Interactive Refinement & Export',
+        body: 'The Comic Viewer is an interactive canvas. Drag and drop pages to re-sequence your story. Directly interact with panels to regenerate images with new prompts, create short video loops, or generate text-to-speech dialogue. Once satisfied, export your multi-page comic in high-quality PDF or CBZ formats.',
       },
     },
-    settings: {
-      title: 'Settings Deep Dive',
-      generation: {
-        title: 'Generation Defaults',
-        body: "Control the core artistic output. Art Style applies a consistent aesthetic (e.g., Manga, Noir). Image Quality adjusts detail and generation time. Aspect Ratio sets the shape of each panel, influencing the overall page composition. The Negative Prompt helps you exclude unwanted elements like text or watermarks from your images.",
+    advanced: {
+      title: 'Advanced Techniques & Best Practices',
+      prompting: {
+        title: 'Prompt Engineering Masterclass',
+        body: "The Visual Prompt is your primary interface with the AI artist. To achieve professional results, move beyond simple descriptions and adopt cinematic language. Specify **camera shots** (e.g., 'low-angle shot of the hero', 'extreme close-up on the villain\'s eyes'), **lighting** (e.g., 'dramatic Rembrandt lighting casting long shadows', 'soft morning light filtering through a window'), and **character details** (e.g., 'a grim expression of determination', 'shoulders slumped in defeat'). The more specific your direction, the more compelling the result.",
       },
-      layout: {
-        title: 'Layout & Composition',
-        body: "Define the structure of your page. The Panel Layout algorithm determines how panels are arranged: 'Balanced' for a classic grid-like feel, 'Ordered' for a sequential strip, and 'Dynamic' for a more varied, modern look. Gutter Width controls the spacing between panels, and the Page Border adds a professional-looking finish.",
+      consistency: {
+        title: 'Maximizing Visual Consistency',
+        body: 'The World-Building Hub is your primary tool against the stochastic nature of generative AI. For best results, edit the AI-generated descriptions to be hyper-specific. Instead of "a detective," write "a grizzled detective in a worn, brown trench coat, a fedora casting a shadow over his tired, blue eyes." Then, regenerate the reference image until it perfectly captures your vision. This detailed visual anchor is used in all subsequent generations.',
       },
-      bubbles: {
-        title: 'Speech Bubbles',
-        body: "Customize how dialogue is presented. You can toggle speech bubbles on or off, select a font that matches your comic's tone, and choose a visual style for the bubbles themselves, from classic rounded to sharp-edged or cloud-like.",
+      pacing: {
+        title: 'Controlling Narrative Pacing',
+        body: "The **Action Score** in the Script Review directly influences a panel's size and visual dominance on the page. Use this intentionally to control the narrative cadence. A quiet, establishing shot of a city might have an Action Score of 3, making it smaller. A climactic punch or a shocking reveal should be a 9 or 10, ensuring it commands the reader's attention and dictates the flow of the page.",
+      },
+      posing: {
+        title: 'Using the Pose Library for Dynamic Action',
+        body: 'For characters with recurring actions, the Pose Library is invaluable. Define specific poses like "fighting stance," "defensive posture," or "casting a spell." When the AI generates a panel, it will reference these descriptions, leading to more accurate and dynamic character depictions, especially in action-heavy sequences.',
       },
     },
-    tips: {
-      title: 'Tips & Best Practices',
-      tip1: {
-        title: 'Master the Visual Prompt',
-        body: "Your most powerful tool is the Visual Prompt editor in the Scene Review stage. Don't just accept the AI's first draft. Add specifics: camera angles ('low-angle shot'), lighting ('dramatic Rembrandt lighting'), character emotions ('a grim expression'), and setting details ('a cluttered, dusty library'). The more detail, the better the result.",
-      },
-      tip2: {
-        title: 'Elaborate on Character Descriptions',
-        body: "When defining characters, the AI-generated description is just a starting point. Edit it to be highly specific. Instead of 'a man in a coat', write 'a grizzled detective in a worn, brown trench coat, a fedora casting a shadow over his tired eyes'. This detail is key to consistency.",
-      },
-      tip3: {
-        title: 'Use Action Scores Intentionally',
-        body: "The Action Score directly translates to panel size. Use it to control the narrative rhythm. A quiet, establishing shot might be a 3 or 4, while the climactic action or a shocking reveal should be a 9 or 10 to dominate the page and draw the reader's eye.",
-      },
-      tip4: {
-        title: 'Iterate and Experiment',
-        body: "Don't be afraid to try different settings. A story told in the 'Noir' style will feel completely different from the same story in 'Watercolor'. Experiment with different layout algorithms and aspect ratios to see how they change the flow and feel of your comic.",
-      },
+    engine: {
+      title: 'The Hybrid Engine: AI & Algorithm Synergy',
+      body: "Comic-Gen's power lies in its hybrid architecture, which delegates tasks to the system best suited for them. **Google's Gemini models** handle creative and interpretive tasks: narrative analysis, semantic understanding, and the artistic generation of images, video, and audio. **Deterministic algorithms**, powered by the D.js library, handle tasks requiring mathematical precision and unwavering structure, such as panel layout composition and collision-free speech bubble placement. This synergy allows for a final product that is both creatively rich and professionally structured, leveraging the strengths of both AI and classical computing.",
     },
     faq: {
       title: 'Frequently Asked Questions',
       q1: 'Why did my comic generation fail?',
-      a1: 'Generation can fail for several reasons: network issues, an overloaded AI service, or prompts that violate safety policies. The most common fix is to simplify your visual prompts, remove potentially ambiguous language, and try again.',
-      q2: 'Why do my characters look different in every panel?',
-      a2: "This is a common challenge with AI image generation. The 'Character Definition' step is designed to minimize this. For best results, provide a very detailed text description for each character and re-generate their reference image until you have one that captures their essence well. This detailed reference is crucial for consistency.",
-      q3: 'What are the limitations?',
-      a3: "The app is optimized for short text excerpts (up to 50KB) to generate a single, dense comic page. It's a creative tool that may interpret text in unexpected ways. The AI's ability to maintain perfect consistency, especially with fine details, is still evolving.",
-      q4: 'What do all the settings in the Settings Page do?',
-      a4: "The settings provide deep control over the final output. They are grouped into 'Generation' (affecting the art itself), 'General' (affecting the user interface and speech bubbles), and 'Data' (for managing your saved settings and comics). Refer to the 'Settings Deep Dive' section above for a detailed explanation of each option.",
+      a1: 'Generation can fail due to several reasons: network issues, an overloaded AI service (rate limiting), or prompts that trigger safety filters. If you encounter an API key error for video, use the button to re-select a valid key. For content-related failures, try simplifying your visual prompts and removing ambiguous language.',
+      q2: 'How can I create multi-page comics?',
+      a2: 'The application is built around a project-based workflow. You can generate as many pages as you need within a single project. Use the "Layout New Page" button from the Project Dashboard to compose new pages from your chapters. You can then reorder all your created pages in the Comic Viewer before exporting.',
+      q3: 'What is the ideal text length for one page?',
+      a3: "The AI is optimized to segment a chapter excerpt into a maximum of 6-8 key scenes for a single page. If your text yields too many scenes, consider breaking it into smaller chunks in a text editor before pasting it in. This gives you finer control over what appears on each page.",
+      q4: 'How does video generation work?',
+      a4: "Video panels are generated using Google's Veo model, which is a premium feature. This requires you to select an API key associated with a project that has billing enabled. The generation can take several minutes. The result is a short, looping, cinematic clip based on your panel's prompt.",
+    },
+    troubleshooting: {
+      title: 'Troubleshooting Guide',
+      api: {
+        title: 'API Errors (Rate Limits, Billing, Invalid Key)',
+        body: 'These errors are sent from the Google AI service. A "429" error indicates you are making requests too frequently. The app will automatically enter a 1-minute cooldown. Billing or quota errors mean you need to check your Google Cloud project settings. An "entity not found" error for video generation means your selected API key is invalid; the app will prompt you to select a new one.',
+      },
+      consistency: {
+        title: 'Character/Location Inconsistency',
+        body: 'If visual elements still look inconsistent after world-building, the most effective solution is to make their text descriptions even more detailed and specific. Re-generate the reference images in the World-Building Hub until they are perfect. Also, explicitly mentioning the character\'s name in the visual prompt for a scene can help reinforce the connection (e.g., "A low-angle shot of **Arion** looking determined...").',
+      },
     },
     technical: {
       title: 'Technical Snapshot',
-      body: "Comic-Gen PWA is built with React and leverages the Google Gemini API. Specifically, it uses the 'gemini-2.5-pro' model for advanced text analysis and scripting, and the 'imagen-4.0-generate-001' model for high-quality image generation. Page composition is handled client-side by the powerful D3.js library, which creates the treemap-based panel layouts. All user data, including saved comics and session progress, is stored locally in your browser using IndexedDB.",
+      body: "Comic-Gen PWA is a React 19 application utilizing Redux Toolkit for state management. It interfaces with the Google Gemini API, specifically using 'gemini-2.5-pro' for text analysis, 'imagen-4.0-generate-001' for image generation, 'veo-3.1-fast-generate-preview' for video, and 'gemini-2.5-flash-preview-tts' for audio. Client-side page composition and physics simulations are handled by D3.js. All project data is stored locally in-browser via IndexedDB, with PWA capabilities provided by a Workbox-powered service worker.",
+    },
+  },
+  onboarding: {
+    title: 'Quick Start Guide',
+    skip: 'Skip Tour',
+    back: 'Back',
+    next: 'Next',
+    finish: 'Finish',
+    step0: {
+      title: 'Welcome to Comic-Gen PWA!',
+      body: "This quick tour will guide you through the core features to turn your stories into amazing comics. Let's begin!",
+    },
+    step1: {
+      title: '1. Import Your Story',
+      body: 'Everything starts with a story. You can import text from the public library, upload a file, or paste it directly. The AI will then analyze it to create a comic script.',
+    },
+    step2: {
+      title: '2. Review the Script',
+      body: "This is the Script Review. You can edit the AI's interpretation of each scene. The 'Visual Prompt' is your most powerful tool. Be descriptive to get the best results!",
+    },
+    step3: {
+      title: '3. Build Your World',
+      body: "Next is the World-Building Hub. To keep characters looking consistent, generate a 'character sheet' for each one. This step is crucial for quality!",
+    },
+    step4: {
+      title: '4. Layout Your Page',
+      body: 'In the Page Layout editor, select which scenes from your script you want to compose into a single comic page.',
+    },
+    step5: {
+      title: '5. Generate & Refine',
+      body: 'Once you generate your pages, you can view, re-arrange, and edit them in the Comic Viewer. You can even regenerate individual panels, add video, or generate speech.',
+    },
+    step6: {
+      title: "You're Ready to Create!",
+      body: "That's it! You're now familiar with the creative workflow. You can find more detailed information in the Help section anytime. Enjoy!",
     },
   },
   common: {
@@ -320,6 +442,7 @@ const en = {
     save: 'Save',
     cancel: 'Cancel',
     enabled: 'Enabled',
+    delete: 'Delete',
   },
   error: {
     noScenesExtracted: 'Could not extract any scenes from the text.',
@@ -356,6 +479,19 @@ const en = {
   Base Character Description: {{characterDescription}}.
   The character MUST be depicted with this specific pose and expression: {{poseDescription}}.
   Style: character sheet, clean lines, neutral background, centered.`,
+    wordCloudAnalysisPrompt: `Analyze the following text to identify key semantic concepts for word clouds. Return a JSON object with the specified structure. For each entry in a "words" array, provide a "text" (a single word or a short 2-word concept) and a "size" (an integer from 10 to 100 representing its importance/frequency).
+
+1.  **overall**: 30-40 most important words/concepts representing the entire text's themes, mood, and subject matter.
+2.  **characters**: An array for the top 3-5 main characters. For each, provide their "name" and 15-20 "words" that describe their personality, actions, or key associations.
+3.  **locations**: An array for the top 3-5 key locations/settings. For each, provide its "name" and 15-20 "words" describing its atmosphere, features, or significance.
+4.  **events**: An array for the top 3-5 major plot points or events. For each, provide a short "name" (e.g., "The Castle Siege") and 15-20 "words" that summarize the action or outcome.
+
+Focus on nouns, verbs, and evocative adjectives. Combine related terms (e.g., "run", "ran" -> "run"). The "size" must reflect a scaled measure of importance.
+
+---
+TEXT:
+{{text}}
+---`,
   },
 };
 
@@ -391,6 +527,53 @@ const de: typeof en = {
     fetchError: 'Fehler beim Abrufen von Büchern aus der Bibliothek.',
     noTextFile: 'Keine Textdatei für "{{title}}" verfügbar.',
     downloadError: 'Fehler beim Herunterladen des Buchtextes.',
+    myLibrary: 'Meine Bibliothek',
+    onlineSearch: 'Online-Suche',
+    deleteBook: 'Buch löschen',
+    confirmDeleteBookTitle: 'Löschen bestätigen',
+    confirmDeleteBookBody:
+      "Möchten Sie '{{title}}' wirklich dauerhaft aus Ihrer lokalen Bibliothek löschen?",
+    emptyLibrary: 'Ihre Bibliothek ist leer.',
+    emptyLibraryDesc:
+      'Laden Sie Bücher aus dem "Online-Suche"-Tab herunter, um sie hier für die Offline-Nutzung zu speichern.',
+    noResults: 'Keine Bücher für Ihre Anfrage gefunden.',
+    searchBooks: 'Nach Büchern oder Autoren suchen...',
+    clearSearch: 'Suche löschen',
+    saved: 'Gespeichert',
+    addToLibrary: 'Zur Bibliothek hinzufügen',
+    source: 'Quelle',
+    gutenberg: 'Project Gutenberg',
+    openlibrary: 'OpenLibrary',
+    wikimedia: 'Wikimedia Commons',
+    googlebooks: 'Google Books',
+    dta: 'Deutsches Textarchiv',
+    manageBook: 'Verwalten',
+    viewOnGoogleBooks: 'Bei Google Books ansehen',
+    downloadFailed: 'Download fehlgeschlagen',
+  },
+  bookDetail: {
+    title: 'Buch-Werkstatt',
+    backToLibrary: 'Zurück zur Bibliothek',
+    tabReader: 'Lesen & Bearbeiten',
+    tabMetadata: 'Metadaten',
+    tabAnalysis: 'KI-Analyse',
+    exportText: 'Als .txt exportieren',
+    notes: 'Notizen',
+    notesPlaceholder: 'Ihre persönlichen Notizen zu diesem Werk...',
+    tags: 'Tags / Stichwörter',
+    tagsPlaceholder: 'Tags hinzufügen, getrennt durch Kommas',
+    saveChanges: 'Änderungen speichern',
+    changesSaved: 'Änderungen gespeichert!',
+    wordCloudAnalysis: 'Wortwolken-Analyse',
+    wordCloudDescription:
+      'Generieren Sie semantische Wortwolken, um die Kernthemen, Charaktere und Ereignisse dieses Werkes zu visualisieren.',
+    generateAnalysis: 'Analyse starten',
+    generatingAnalysis: 'Analysiere...',
+    analysisError: 'Analyse konnte nicht generiert werden.',
+    overallWork: 'Gesamtwerk',
+    keyCharacters: 'Schlüsselfiguren',
+    keyLocations: 'Schlüsselorte & Welt',
+    keyEvents: 'Schlüsselereignisse',
   },
   creatorWorkspace: {
     stepImport: 'Import',
@@ -474,6 +657,13 @@ const de: typeof en = {
     tabLocations: 'Orte',
     tabProps: 'Requisiten',
     proceed: 'Weiter zum Seitenlayout',
+    addItem: 'Objekt hinzufügen',
+    addItemPlaceholder: 'Name (z.B. "Das magische Schwert")',
+    add: 'Hinzufügen',
+    batchGenerate: 'Fehlende generieren',
+    generatingBatch: 'Generiere {{current}}/{{total}}...',
+    allGenerated: 'Alle Elemente haben bereits Bilder!',
+    complete: 'Stapelverarbeitung abgeschlossen!',
   },
   pageLayout: {
     title: 'Seitenlayout-Editor',
@@ -534,13 +724,18 @@ const de: typeof en = {
   settings: {
     title: 'Comic-Einstellungen',
     showSpeechBubbles: 'Sprechblasen anzeigen',
-    bubbleFontSize: 'Schriftgröße der Blasen',
-    bubbleFont: 'Schriftart der Blasen',
+    bubbleFontSize: 'Schriftgröße',
+    bubbleFont: 'Schriftart',
     fontBangers: 'Bangers (Comic)',
+    fontComicNeue: 'Comic Neue',
+    fontArchitectsDaughter: 'Architects Daughter',
     bubbleStyle: 'Sprechblasen-Stil',
     styleRounded: 'Abgerundet',
     styleSharp: 'Scharf',
     styleCloud: 'Wolke',
+    bubbleColors: 'Farben (BG/Text/Rand)',
+    bubbleOpacity: 'Deckkraft',
+    ttsVoice: 'TTS-Stimme',
     panelLayout: 'Panel-Layout',
     layoutSquarified: 'Ausgeglichen',
     layoutStrip: 'Geordnet',
@@ -567,6 +762,17 @@ const de: typeof en = {
     used: 'verwendet',
     storageWarning:
       'Warnung: Der Speicher ist fast voll. Sie können möglicherweise keine neuen Comics speichern.',
+    aiModelEngine: 'KI-Modell-Engine',
+    aiModelDesc: 'Wählen Sie das zugrunde liegende KI-Modell für die Bildgenerierung.',
+    modelGemini3: 'Gemini 3 Pro Image (Ultimative Qualität)',
+    modelNano: '⚡ Nano Banana (Flash) - Turbo-Modus',
+    modelImagen4: 'Imagen 4 (Legacy Kontrolle)',
+    advancedOptions: 'Erweiterte Generierungsoptionen',
+    pageComposition: 'Seitenkomposition',
+    panelDensity: 'Panel-Dichte',
+    videoGeneration: 'Video-Generierung',
+    resolution: 'Auflösung',
+    motionLevel: 'Bewegungsintensität',
   },
   settingsPage: {
     title: 'App-Einstellungen',
@@ -597,80 +803,131 @@ const de: typeof en = {
       'Sind Sie sicher, dass Sie alle Daten löschen möchten? Dies kann nicht rückgängig gemacht werden.',
     backButton: 'Zurück zum Editor',
   },
+  projectOverview: {
+    chapters: 'Kapitel',
+    totalScenes: 'Gesamtszenen',
+    characters: 'Charaktere',
+    pagesCreated: 'Erstellte Seiten',
+    getStarted: 'Loslegen',
+    buildWorldTitle: '1. Baue deine Welt',
+    buildWorldDesc: 'Definiere konsistente Charaktere und Orte.',
+    layoutPageTitle: '2. Seite layouten',
+    layoutPageDesc: 'Stelle Szenen aus einem Kapitel zu einer Comic-Seite zusammen.',
+  },
   helpPage: {
-    title: 'Hilfe & Informationen',
+    title: 'Benutzerhandbuch & Technische Referenz',
     backButton: 'Zurück zum Editor',
+    quickLinks: 'Auf dieser Seite',
     introduction: {
       title: 'Einführung',
-      body: 'Willkommen bei Comic-Gen PWA, einem hochmodernen Werkzeug, das geschriebene Erzählungen in visuell beeindruckende Comicseiten umwandelt. Diese Anwendung nutzt einen anspruchsvollen hybriden KI-algorithmischen Ansatz: Sie verwendet die kreative Kraft von Googles Gemini-Modellen für die narrative Interpretation und Bilderzeugung, kombiniert mit deterministischen Algorithmen für präzises Seitenlayout und Komposition. Dieser Leitfaden führt Sie durch die Beherrschung seiner Funktionen, um Ihre Geschichten zum Leben zu erwecken.',
+      body: 'Willkommen bei Comic-Gen PWA, einem professionellen Studio zur Umwandlung von geschriebenen Erzählungen in visuell beeindruckende Comic-Bücher. Diese Anwendung basiert auf einer hochentwickelten hybriden KI-algorithmischen Engine, die Ihnen maximale kreative Kontrolle ermöglicht und gleichzeitig die aufwändigen Arbeiten automatisiert. Dieses Handbuch bietet einen umfassenden Überblick, vom grundlegenden Arbeitsablauf bis hin zu fortgeschrittenen Techniken, um Ihnen zu helfen, die Kunst der KI-gestützten Comic-Erstellung zu meistern.',
     },
     workflow: {
       title: 'Der kreative Arbeitsablauf',
       step1: {
-        title: '1. Text bereitstellen',
-        body: 'Ihre Reise beginnt mit dem Text. Sie können einen gemeinfreien Klassiker auswählen, Text aus einer Online-Quelle einfügen oder Ihre eigene .txt-Datei hochladen. Für beste Ergebnisse verwenden Sie erzählenden Text mit klaren Handlungen, Beschreibungen und Charakteren. Die KI segmentiert diesen Text in maximal 6-8 Schlüsselszenen, um auf eine einzige Comic-Seite zu passen.',
+        title: '1. Projektinitialisierung',
+        body: 'Ihre Reise beginnt mit dem Text. Importieren Sie einen gemeinfreien Klassiker, laden Sie eine `.txt`-Datei hoch oder fügen Sie Ihr Manuskript ein. Die KI führt eine globale Analyse durch, strukturiert Ihren Text in Kapitel und identifiziert Schlüsselszenen, Charaktere, Orte und Requisiten. Dies bildet die Grundlage Ihres Projekts.',
       },
       step2: {
-        title: '2. Skript-Überprüfung & Verfeinerung',
-        body: "Dies ist der entscheidendste Schritt für die kreative Kontrolle. Die KI präsentiert ein 'Comic-Skript', in dem sie jede Szene interpretiert hat. Hier können Sie den visuellen Prompt bearbeiten, der die direkte Anweisung für die Bilderzeugungs-KI ist. Seien Sie spezifisch! Sie können auch den Aktions-Wert anpassen, der die endgültige Größe des Panels beeinflusst – höhere Werte bedeuten größere, wichtigere Panels.",
+        title: '2. World-Building',
+        body: 'Dies ist ein entscheidender Schritt der Vorproduktion, um einen konsistenten "visuellen Kanon" zu etablieren. Im World-Building Hub generieren Sie Referenzbögen für Charaktere, Orte und Requisiten. Indem Sie hier detaillierte Beschreibungen bereitstellen und kanonische Bilder generieren, verankern Sie das visuelle Verständnis der KI, was die Inkonsistenz in den finalen Comic-Panels drastisch reduziert.',
       },
       step3: {
-        title: '3. Charakter-Definition',
-        body: 'Um das häufige KI-Problem inkonsistenter Charakterdarstellungen zu bekämpfen, ermöglicht dieser Schritt die Erstellung einer visuellen Grundlage. Für jeden erkannten Charakter können Sie ein Referenzbild und eine detaillierte Beschreibung generieren. Dieses \'Charakterblatt\' wird dann für alle nachfolgenden Bilderzeugungen an die KI zurückgespielt, was die visuelle Konsistenz über die Panels hinweg drastisch verbessert.',
+        title: '3. Skript-Überprüfung & Verfeinerung',
+        body: 'Die Phase der Skript-Überprüfung ist Ihr kreatives Kontrollzentrum. Die KI präsentiert ihre Interpretation jeder Szene, die Sie verfeinern können. Das mächtigste Werkzeug hier ist der **visuelle Prompt**. Durch die Bearbeitung dieses Prompts können Sie die KI wie ein Filmregisseur anweisen und Kamerawinkel, Charakteremotionen, Beleuchtung und Komposition festlegen, um sicherzustellen, dass die endgültige Grafik Ihrer Vision entspricht.',
       },
       step4: {
-        title: '4. Generierung & Export',
-        body: 'Nachdem Ihr Skript und Ihre Charaktere finalisiert sind, generiert die Engine alle Panel-Bilder und komponiert sie unter Verwendung des von Ihnen gewählten Layout-Algorithmus auf die Seite. Die endgültige hochauflösende Comic-Seite kann dann mit verschiedenen Einstellungen angepasst und in mehreren Formaten exportiert werden, darunter CBZ für Comic-Reader, PDF zur universellen Anzeige oder ein ZIP-Archiv mit einzelnen Panel-Bildern.',
+        title: '4. Seitenlayout & Generierung',
+        body: 'Im Seitenlayout-Editor agieren Sie als Seitendesigner. Wählen Sie Szenen aus einem Kapitel aus, um eine einzelne Seite zu erstellen. Die App verwendet dann einen deterministischen Layout-Algorithmus, um die Panels basierend auf ihrem Aktions-Wert anzuordnen, wodurch eine professionelle und erzählerisch kohärente Seite entsteht.',
+      },
+      step5: {
+        title: '5. Interaktive Verfeinerung & Export',
+        body: 'Der Comic-Viewer ist eine interaktive Leinwand. Ziehen und Ablegen von Seiten, um Ihre Geschichte neu zu sequenzieren. Interagieren Sie direkt mit Panels, um Bilder mit neuen Prompts neu zu generieren, kurze Video-Loops zu erstellen oder Text-zu-Sprache-Dialoge zu erzeugen. Wenn Sie zufrieden sind, exportieren Sie Ihren mehrseitigen Comic in hochwertigen PDF- oder CBZ-Formaten.',
       },
     },
-    settings: {
-      title: 'Einstellungen im Detail',
-      generation: {
-        title: 'Generierungs-Standards',
-        body: "Steuern Sie die künstlerische Kernaussage. Der Kunststil wendet eine konsistente Ästhetik an (z. B. Manga, Noir). Die Bildqualität passt den Detailgrad und die Generierungszeit an. Das Seitenverhältnis legt die Form jedes Panels fest und beeinflusst die gesamte Seitenkomposition. Der negative Prompt hilft Ihnen, unerwünschte Elemente wie Text oder Wasserzeichen aus Ihren Bildern auszuschließen.",
+    advanced: {
+      title: 'Fortgeschrittene Techniken & Best Practices',
+      prompting: {
+        title: 'Meisterklasse Prompt-Engineering',
+        body: 'Der visuelle Prompt ist Ihre primäre Schnittstelle zum KI-Künstler. Um professionelle Ergebnisse zu erzielen, gehen Sie über einfache Beschreibungen hinaus und verwenden Sie eine filmische Sprache. Geben Sie **Kameraeinstellungen** an (z. B. "Froschperspektive des Helden", "extreme Nahaufnahme der Augen des Bösewichts"), **Beleuchtung** (z. B. "dramatische Rembrandt-Beleuchtung, die lange Schatten wirft", "weiches Morgenlicht, das durch ein Fenster fällt") und **Charakterdetails** (z. B. "ein grimmiger Ausdruck der Entschlossenheit", "schultern in Niederlage gesenkt"). Je spezifischer Ihre Anweisung, desto überzeugender das Ergebnis.',
       },
-      layout: {
-        title: 'Layout & Komposition',
-        body: "Definieren Sie die Struktur Ihrer Seite. Der Panel-Layout-Algorithmus bestimmt, wie die Panels angeordnet werden: 'Ausgeglichen' für ein klassisches, gitterartiges Gefühl, 'Geordnet' für einen sequenziellen Streifen und 'Dynamisch' für einen abwechslungsreicheren, modernen Look. Der Panel-Abstand steuert den Abstand zwischen den Panels, und der Seitenrand fügt ein professionell aussehendes Finish hinzu.",
+      consistency: {
+        title: 'Maximierung der visuellen Konsistenz',
+        body: 'Der World-Building Hub ist Ihr Hauptwerkzeug gegen die stochastische Natur generativer KI. Für beste Ergebnisse bearbeiten Sie die von der KI generierten Beschreibungen, um sie hyper-spezifisch zu machen. Statt "ein Detektiv" schreiben Sie "ein ergrauter Detektiv in einem abgenutzten, braunen Trenchcoat, ein Fedora wirft einen Schatten über seine müden, blauen Augen." Regenerieren Sie dann das Referenzbild, bis es Ihre Vision perfekt einfängt. Dieser detaillierte visuelle Anker wird bei allen nachfolgenden Generierungen verwendet.',
       },
-      bubbles: {
-        title: 'Sprechblasen',
-        body: "Passen Sie an, wie Dialoge dargestellt werden. Sie können Sprechblasen ein- oder ausschalten, eine Schriftart auswählen, die zum Ton Ihres Comics passt, und einen visuellen Stil für die Blasen selbst wählen, von klassisch abgerundet über scharfkantig bis hin zu wolkenartig.",
+      pacing: {
+        title: 'Steuerung des erzählerischen Tempos',
+        body: 'Der **Aktions-Wert** in der Skript-Überprüfung beeinflusst direkt die Größe und visuelle Dominanz eines Panels auf der Seite. Nutzen Sie dies gezielt, um die narrative Kadenz zu steuern. Eine ruhige, etablierende Aufnahme einer Stadt könnte einen Aktions-Wert von 3 haben, was sie kleiner macht. Ein klimatischer Schlag oder eine schockierende Enthüllung sollte eine 9 oder 10 sein, um die Aufmerksamkeit des Lesers zu fesseln und den Fluss der Seite zu bestimmen.',
+      },
+      posing: {
+        title: 'Nutzung der Posen-Bibliothek für dynamische Action',
+        body: 'Für Charaktere mit wiederkehrenden Handlungen ist die Posen-Bibliothek von unschätzbarem Wert. Definieren Sie spezifische Posen wie "Kampfhaltung", "Verteidigungshaltung" oder "einen Zauber wirkend". Wenn die KI ein Panel generiert, wird sie auf diese Beschreibungen zurückgreifen, was zu genaueren und dynamischeren Charakterdarstellungen führt, insbesondere in actionreichen Sequenzen.',
       },
     },
-    tips: {
-      title: 'Tipps & bewährte Methoden',
-      tip1: {
-        title: 'Meistern Sie den visuellen Prompt',
-        body: "Ihr mächtigstes Werkzeug ist der Editor für visuelle Prompts in der Phase der Szenenüberprüfung. Akzeptieren Sie nicht einfach den ersten Entwurf der KI. Fügen Sie Besonderheiten hinzu: Kamerawinkel ('Froschperspektive'), Beleuchtung ('dramatische Rembrandt-Beleuchtung'), Charakteremotionen ('ein grimmiger Ausdruck') und Umgebungsdetails ('eine unordentliche, staubige Bibliothek'). Je mehr Details, desto besser das Ergebnis.",
-      },
-      tip2: {
-        title: 'Arbeiten Sie Charakterbeschreibungen aus',
-        body: "Bei der Definition von Charakteren ist die KI-generierte Beschreibung nur ein Ausgangspunkt. Bearbeiten Sie sie, um sehr spezifisch zu sein. Anstelle von 'ein Mann in einem Mantel' schreiben Sie 'ein ergrauter Detektiv in einem abgenutzten, braunen Trenchcoat, ein Fedora wirft einen Schatten über seine müden Augen'. Dieses Detail ist der Schlüssel zur Konsistenz.",
-      },
-      tip3: {
-        title: 'Setzen Sie Aktions-Werte gezielt ein',
-        body: "Der Aktions-Wert übersetzt sich direkt in die Panelgröße. Nutzen Sie ihn, um den erzählerischen Rhythmus zu steuern. Eine ruhige, etablierende Aufnahme könnte eine 3 oder 4 sein, während die klimatische Handlung oder eine schockierende Enthüllung eine 9 oder 10 sein sollte, um die Seite zu dominieren und den Blick des Lesers zu fesseln.",
-      },
-      tip4: {
-        title: 'Iterieren und Experimentieren',
-        body: "Scheuen Sie sich nicht, verschiedene Einstellungen auszuprobieren. Eine Geschichte im 'Noir'-Stil wird sich völlig anders anfühlen als dieselbe Geschichte in 'Aquarell'. Experimentieren Sie mit verschiedenen Layout-Algorithmen und Seitenverhältnissen, um zu sehen, wie sie den Fluss und das Gefühl Ihres Comics verändern.",
-      },
+    engine: {
+      title: 'Die Hybride Engine: Synergie von KI & Algorithmus',
+      body: 'Die Stärke von Comic-Gen liegt in seiner hybriden Architektur, die Aufgaben an das am besten geeignete System delegiert. **Googles Gemini-Modelle** übernehmen kreative und interpretative Aufgaben: narrative Analyse, semantisches Verständnis und die künstlerische Generierung von Bildern, Videos und Audio. **Deterministische Algorithmen**, angetrieben von der D3.js-Bibliothek, erledigen Aufgaben, die mathematische Präzision und unerschütterliche Struktur erfordern, wie die Komposition des Panel-Layouts und die kollisionsfreie Platzierung von Sprechblasen. Diese Synergie ermöglicht ein Endprodukt, das sowohl kreativ reichhaltig als auch professionell strukturiert ist und die Stärken von KI und klassischem Computing nutzt.',
     },
     faq: {
       title: 'Häufig gestellte Fragen',
       q1: 'Warum ist meine Comic-Generierung fehlgeschlagen?',
-      a1: 'Die Generierung kann aus mehreren Gründen fehlschlagen: Netzwerkprobleme, ein überlasteter KI-Dienst oder Prompts, die gegen Sicherheitsrichtlinien verstoßen. Die häufigste Lösung besteht darin, Ihre visuellen Prompts zu vereinfachen, potenziell mehrdeutige Sprache zu entfernen und es erneut zu versuchen.',
-      q2: 'Warum sehen meine Charaktere in jedem Panel anders aus?',
-      a2: "Dies ist eine häufige Herausforderung bei der KI-Bilderzeugung. Der Schritt 'Charakter-Definition' soll dies minimieren. Für beste Ergebnisse geben Sie eine sehr detaillierte Textbeschreibung für jeden Charakter an und generieren Sie deren Referenzbild neu, bis Sie eines haben, das ihre Essenz gut einfängt. Diese detaillierte Referenz ist entscheidend für die Konsistenz.",
-      q3: 'Was sind die Einschränkungen?',
-      a3: "Die App ist für kurze Textauszüge (bis zu 50 KB) optimiert, um eine einzelne, dichte Comic-Seite zu generieren. Es ist ein kreatives Werkzeug, das Text auf unerwartete Weise interpretieren kann. Die Fähigkeit der KI, perfekte Konsistenz, insbesondere bei feinen Details, aufrechtzuerhalten, entwickelt sich noch.",
-      q4: 'Was bewirken all die Einstellungen auf der Einstellungsseite?',
-      a4: "Die Einstellungen bieten eine umfassende Kontrolle über das Endergebnis. Sie sind in 'Generierung' (beeinflusst die Kunst selbst), 'Allgemein' (beeinflusst die Benutzeroberfläche und Sprechblasen) und 'Daten' (zur Verwaltung Ihrer gespeicherten Einstellungen und Comics) unterteilt. Beziehen Sie sich auf den Abschnitt 'Einstellungen im Detail' oben für eine detaillierte Erklärung jeder Option.",
+      a1: 'Die Generierung kann aus mehreren Gründen fehlschlagen: Netzwerkprobleme, ein überlasteter KI-Dienst (Rate Limiting) oder Prompts, die Sicherheitsfilter auslösen. Wenn bei Videos ein API-Schlüsselfehler auftritt, verwenden Sie die Schaltfläche, um einen gültigen Schlüssel erneut auszuwählen. Bei inhaltsbezogenen Fehlern versuchen Sie, Ihre visuellen Prompts zu vereinfachen und mehrdeutige Sprache zu entfernen.',
+      q2: 'Wie kann ich mehrseitige Comics erstellen?',
+      a2: 'Die Anwendung basiert auf einem projektbasierten Arbeitsablauf. Sie können so viele Seiten wie nötig innerhalb eines Projekts generieren. Verwenden Sie die Schaltfläche "Neue Seite layouten" im Projekt-Dashboard, um neue Seiten aus Ihren Kapiteln zu erstellen. Sie können dann alle erstellten Seiten im Comic-Viewer neu anordnen, bevor Sie sie exportieren.',
+      q3: 'Was ist die ideale Textlänge für eine Seite?',
+      a3: "Die KI ist optimiert, um einen Kapitelauszug in maximal 6-8 Schlüsselszenen für eine einzelne Seite zu segmentieren. Wenn Ihr Text zu viele Szenen ergibt, sollten Sie ihn in einem Texteditor in kleinere Abschnitte unterteilen, bevor Sie ihn einfügen. Dies gibt Ihnen eine feinere Kontrolle darüber, was auf jeder Seite erscheint.",
+      q4: 'Wie funktioniert die Video-Generierung?',
+      a4: "Video-Panels werden mit dem Veo-Modell von Google generiert, was eine Premium-Funktion ist. Dies erfordert, dass Sie einen API-Schlüssel auswählen, der mit einem Projekt mit aktivierter Abrechnung verknüpft ist. Die Generierung kann mehrere Minuten dauern. Das Ergebnis ist ein kurzer, filmischer Clip in Endlosschleife, der auf dem Prompt Ihres Panels basiert.",
+    },
+    troubleshooting: {
+      title: 'Fehlerbehebung',
+      api: {
+        title: 'API-Fehler (Rate Limits, Abrechnung, ungültiger Schlüssel)',
+        body: 'Diese Fehler werden vom Google AI-Dienst gesendet. Ein "429"-Fehler bedeutet, dass Sie zu häufig Anfragen stellen. Die App geht automatisch in eine 1-minütige Abklingzeit. Abrechnungs- oder Kontingentfehler bedeuten, dass Sie Ihre Google Cloud-Projekteinstellungen überprüfen müssen. Ein "entity not found"-Fehler bei der Video-Generierung bedeutet, dass Ihr ausgewählter API-Schlüssel ungültig ist; die App wird Sie auffordern, einen neuen auszuwählen.',
+      },
+      consistency: {
+        title: 'Inkonsistenz bei Charakteren/Orten',
+        body: 'Wenn visuelle Elemente nach dem World-Building immer noch inkonsistent aussehen, ist die effektivste Lösung, ihre Textbeschreibungen noch detaillierter und spezifischer zu machen. Regenerieren Sie die Referenzbilder im World-Building Hub, bis sie perfekt sind. Auch das explizite Erwähnen des Charakternamens im visuellen Prompt für eine Szene kann helfen, die Verbindung zu verstärken (z. B. "Eine Froschperspektive von **Arion**, der entschlossen blickt...").',
+      },
     },
     technical: {
       title: 'Technischer Überblick',
-      body: "Comic-Gen PWA wurde mit React erstellt und nutzt die Google Gemini API. Insbesondere verwendet es das 'gemini-2.5-pro'-Modell für fortgeschriebene Textanalyse und Skripterstellung und das 'imagen-4.0-generate-001'-Modell für hochwertige Bilderzeugung. Die Seitenkomposition wird clientseitig von der leistungsstarken D3.js-Bibliothek übernommen, die die auf Treemaps basierenden Panel-Layouts erstellt. Alle Benutzerdaten, einschließlich gespeicherter Comics und Sitzungsfortschritt, werden lokal in Ihrem Browser mithilfe von IndexedDB gespeichert.",
+      body: "Comic-Gen PWA ist eine React 19-Anwendung, die Redux Toolkit für die Zustandsverwaltung verwendet. Sie interagiert mit der Google Gemini API und verwendet speziell 'gemini-2.5-pro' für die Textanalyse, 'imagen-4.0-generate-001' für die Bilderzeugung, 'veo-3.1-fast-generate-preview' für Videos und 'gemini-2.5-flash-preview-tts' für Audio. Client-seitige Seitenkomposition und Physiksimulationen werden von D3.js gehandhabt. Alle Projektdaten werden lokal im Browser über IndexedDB gespeichert, wobei PWA-Funktionen durch einen von Workbox betriebenen Service Worker bereitgestellt werden.",
+    },
+  },
+  onboarding: {
+    title: 'Schnellstart-Anleitung',
+    skip: 'Tour überspringen',
+    back: 'Zurück',
+    next: 'Weiter',
+    finish: 'Fertig',
+    step0: {
+      title: 'Willkommen bei Comic-Gen PWA!',
+      body: 'Diese kurze Tour führt Sie durch die Kernfunktionen, um Ihre Geschichten in erstaunliche Comics zu verwandeln. Fangen wir an!',
+    },
+    step1: {
+      title: '1. Ihre Geschichte importieren',
+      body: 'Alles beginnt mit einer Geschichte. Sie können Text aus der öffentlichen Bibliothek importieren, eine Datei hochladen oder ihn direkt einfügen. Die KI analysiert ihn dann, um ein Comic-Skript zu erstellen.',
+    },
+    step2: {
+      title: '2. Das Skript überprüfen',
+      body: 'Dies ist die Skript-Überprüfung. Sie können die Interpretation der KI für jede Szene bearbeiten. Der "Visuelle Prompt" ist Ihr mächtigstes Werkzeug. Seien Sie beschreibend, um die besten Ergebnisse zu erzielen!',
+    },
+    step3: {
+      title: '3. Ihre Welt erschaffen',
+      body: 'Als Nächstes kommt der World-Building Hub. Um Charaktere konsistent aussehen zu lassen, generieren Sie für jeden ein "Charakterblatt". Dieser Schritt ist entscheidend für die Qualität!',
+    },
+    step4: {
+      title: '4. Ihre Seite layouten',
+      body: 'Im Seitenlayout-Editor wählen Sie aus, welche Szenen aus Ihrem Skript Sie zu einer einzigen Comic-Seite zusammensetzen möchten.',
+    },
+    step5: {
+      title: '5. Generieren & Verfeinern',
+      body: 'Sobald Sie Ihre Seiten generiert haben, können Sie sie im Comic-Viewer ansehen, neu anordnen und bearbeiten. Sie können sogar einzelne Panels neu generieren, Videos hinzufügen oder Sprache erzeugen.',
+    },
+    step6: {
+      title: 'Sie sind bereit!',
+      body: 'Das ist alles! Sie sind nun mit dem kreativen Arbeitsablauf vertraut. Detailliertere Informationen finden Sie jederzeit im Hilfe-Bereich. Viel Spaß!',
     },
   },
   common: {
@@ -683,6 +940,7 @@ const de: typeof en = {
     save: 'Speichern',
     cancel: 'Abbrechen',
     enabled: 'Aktiviert',
+    delete: 'Löschen',
   },
   error: {
     noScenesExtracted:
@@ -725,6 +983,19 @@ const de: typeof en = {
   Basis-Charakterbeschreibung: {{characterDescription}}.
   Der Charakter MUSS mit dieser spezifischen Pose und diesem Ausdruck dargestellt werden: {{poseDescription}}.
   Stil: Charakterbogen, saubere Linien, neutraler Hintergrund, zentriert.`,
+    wordCloudAnalysisPrompt: `Analysiere den folgenden Text, um semantische Schlüsselkonzepte für Wortwolken zu identifizieren. Gib ein JSON-Objekt mit der angegebenen Struktur zurück. Gib für jeden Eintrag in einem "words"-Array einen "text" (ein einzelnes Wort oder ein kurzes 2-Wort-Konzept) und eine "size" (eine Ganzzahl von 10 bis 100, die seine Wichtigkeit/Häufigkeit darstellt) an.
+
+1.  **overall**: 30-40 der wichtigsten Wörter/Konzepte, die die Themen, die Stimmung und den Gegenstand des gesamten Textes repräsentieren.
+2.  **characters**: Ein Array für die 3-5 wichtigsten Hauptfiguren. Gib für jede Figur ihren "name" und 15-20 "words" an, die ihre Persönlichkeit, Handlungen oder Schlüsselassoziationen beschreiben.
+3.  **locations**: Ein Array für die 3-5 wichtigsten Orte/Schauplätze. Gib für jeden Ort seinen "name" und 15-20 "words" an, die seine Atmosphäre, Merkmale oder Bedeutung beschreiben.
+4.  **events**: Ein Array für die 3-5 wichtigsten Handlungspunkte oder Ereignisse. Gib für jedes Ereignis einen kurzen "name" (z.B. "Die Belagerung der Burg") und 15-20 "words" an, die die Handlung oder das Ergebnis zusammenfassen.
+
+Konzentriere dich auf Substantive, Verben und aussagekräftige Adjektive. Fasse verwandte Begriffe zusammen (z.B. "laufen", "lief" -> "laufen"). Die "size" muss ein skaliertes Maß für die Wichtigkeit widerspiegeln.
+
+---
+TEXT:
+{{text}}
+---`,
   },
 };
 

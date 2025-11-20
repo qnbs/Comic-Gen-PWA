@@ -1,16 +1,18 @@
 import React from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppDispatch } from '../app/hooks';
-import { generatePoseImage, removePoseFromCharacter, updatePose } from '../features/generationSlice';
+import { removePoseFromCharacter, updatePose } from '../features/projectSlice';
+import { generatePoseImage } from '../features/worldThunks';
 import { Pose } from '../types';
 import { TrashIcon, WandIcon } from './Icons';
+import { getMediaBlob } from '../services/db';
 
 interface PoseEditorProps {
   characterName: string;
   pose: Pose;
 }
 
-const PoseEditor: React.FC<PoseEditorProps> = ({ characterName, pose }) => {
+const PoseEditor: React.FC<PoseEditorProps> = React.memo(({ characterName, pose }) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
 
@@ -18,14 +20,37 @@ const PoseEditor: React.FC<PoseEditorProps> = ({ characterName, pose }) => {
   const [description, setDescription] = React.useState(pose.description);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [imageUrl, setImageUrl] = React.useState<string | null>(null);
 
-  const handleUpdate = () => {
+  React.useEffect(() => {
+    let objectUrl: string | undefined;
+    const loadImage = async () => {
+      if (pose.referenceImageId) {
+        const blob = await getMediaBlob(pose.referenceImageId);
+        if (blob) {
+          objectUrl = URL.createObjectURL(blob);
+          setImageUrl(objectUrl);
+        }
+      } else {
+        setImageUrl(null);
+      }
+    };
+    loadImage();
+
+    return () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [pose.referenceImageId]);
+
+  const handleUpdate = React.useCallback(() => {
     if (pose.name !== name || pose.description !== description) {
       dispatch(updatePose({ characterName, poseId: pose.id, name, description }));
     }
-  };
+  }, [dispatch, characterName, pose.id, pose.name, pose.description, name, description]);
 
-  const handleGenerate = async () => {
+  const handleGenerate = React.useCallback(async () => {
     if (!description.trim()) {
         setError("A description is required to generate a pose.");
         return;
@@ -43,19 +68,19 @@ const PoseEditor: React.FC<PoseEditorProps> = ({ characterName, pose }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [dispatch, characterName, pose.id, description]);
 
-  const handleDelete = () => {
+  const handleDelete = React.useCallback(() => {
     if (window.confirm(`Are you sure you want to delete the pose "${name}"?`)) {
         dispatch(removePoseFromCharacter({ characterName, poseId: pose.id }));
     }
-  }
+  }, [dispatch, characterName, pose.id, name]);
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-md border border-gray-300 dark:border-gray-600 flex flex-col sm:flex-row gap-4">
       <div className="flex-shrink-0 w-24 h-24 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center relative self-center">
-        {pose.referenceImageUrl ? (
-          <img src={pose.referenceImageUrl} alt={name} className="w-full h-full object-cover rounded-md" />
+        {imageUrl ? (
+          <img src={imageUrl} alt={name} className="w-full h-full object-cover rounded-md" />
         ) : (
           <WandIcon className="w-8 h-8 text-gray-400" />
         )}
@@ -86,6 +111,6 @@ const PoseEditor: React.FC<PoseEditorProps> = ({ characterName, pose }) => {
       </div>
     </div>
   );
-};
+});
 
 export default PoseEditor;

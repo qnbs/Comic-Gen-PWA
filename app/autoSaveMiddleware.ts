@@ -1,9 +1,14 @@
-import { Middleware, AnyAction } from '@reduxjs/toolkit';
+import { Middleware, UnknownAction, Dispatch } from '@reduxjs/toolkit';
 import { saveProject } from '../services/db';
 import { ProjectGenerationState } from '../types';
 import { RootState } from './store';
+import { setSaveStatus } from '../features/uiSlice';
 
-// Debounce function to prevent saving on every keystroke
+// Type guard to check if an action has a 'type' property
+function isAction(action: unknown): action is { type: string } {
+  return typeof action === 'object' && action !== null && 'type' in action && typeof (action as { type: unknown }).type === 'string';
+}
+
 const debounce = <T extends unknown[]>(
   func: (...args: T) => void,
   delay: number,
@@ -15,63 +20,81 @@ const debounce = <T extends unknown[]>(
   };
 };
 
-// Rewrote performSave to work with the new project-based state.
-const performSave = (state: RootState) => {
-  const { generation } = state;
-  const { generationState, project } = generation;
+const performSave = async (state: RootState, dispatch: Dispatch<UnknownAction>) => {
+  const { status, project } = state.project.present;
 
-  // Only save if a project exists and is in a state where user is making edits.
   if (
     project &&
-    (generationState === ProjectGenerationState.CHAPTER_REVIEW ||
-      generationState === ProjectGenerationState.WORLD_BUILDING)
+    (status === ProjectGenerationState.CHAPTER_REVIEW ||
+      status === ProjectGenerationState.WORLD_BUILDING ||
+      status === ProjectGenerationState.PAGE_LAYOUT ||
+      status === ProjectGenerationState.VIEWING_PAGES ||
+      status === ProjectGenerationState.DONE)
   ) {
-    saveProject(project);
+    dispatch(setSaveStatus('saving'));
+    try {
+      await saveProject(project);
+      dispatch(setSaveStatus('saved'));
+    } catch (e: unknown) {
+      console.error('Auto-save failed:', e);
+      dispatch(setSaveStatus('error'));
+    }
   }
 };
 
-const debouncedSave = debounce(performSave, 1000);
+const debouncedSave = debounce(performSave, 1500);
 
-// --- Persistence for Settings and UI ---
 const SETTINGS_STORAGE_KEY = 'comicGenSettings';
 const APP_THEME_KEY = 'comicGenTheme';
 
-const persistState = (action: AnyAction, state: RootState) => {
-  // Persist settings slice on any change within it
+const persistState = (action: { type: string }, state: RootState) => {
   if (action.type.startsWith('settings/')) {
     try {
-      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(state.settings));
-    } catch (e) {
+      localStorage.setItem(
+        SETTINGS_STORAGE_KEY,
+        JSON.stringify(state.settings),
+      );
+    } catch (e: unknown) {
       console.error('Could not save settings to local storage', e);
     }
   }
 
-  // Persist UI theme when it's changed
   if (action.type === 'ui/setTheme') {
     try {
       localStorage.setItem(APP_THEME_KEY, state.ui.theme);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('Could not save theme to local storage', e);
     }
   }
 };
 
 export const autoSaveMiddleware: Middleware<{}, RootState> =
-  (store) => (next) => (action) => {
+  (store) => (next) => (action: unknown) => {
     const result = next(action);
 
-    if (typeof action !== 'object' || !action.type) {
+    if (!isAction(action)) {
       return result;
     }
 
     const state = store.getState();
 
-    // Handle session auto-save
-    if (action.type.startsWith('generation/') && !action.type.endsWith('/pending')) {
-      debouncedSave(state);
+    if (state.settings.data.autoSave) {
+      if (
+        (action.type.startsWith('project/') ||
+          action.type.startsWith('world/') ||
+          action.type.startsWith('page/')) &&
+        !action.type.endsWith('/pending') &&
+        action.type !== 'project/create/fulfilled' // Don't auto-save on initial creation
+      ) {
+        debouncedSave(state, store.dispatch as Dispatch<UnknownAction>);
+      }
+      
+      // Explicitly save after project creation is fulfilled
+      if (action.type === 'project/create/fulfilled') {
+          performSave(state, store.dispatch as Dispatch<UnknownAction>);
+      }
     }
 
-    // Handle settings/UI persistence
     persistState(action, state);
 
     return result;

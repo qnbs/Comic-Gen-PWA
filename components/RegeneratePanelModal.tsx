@@ -1,9 +1,10 @@
 import React from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import type { PanelData } from '../types';
-import { useAppDispatch } from '../app/hooks';
-import { regeneratePanel } from '../features/generationSlice';
-import { XCircleIcon } from './Icons';
+import { useAppDispatch, useFocusTrap } from '../app/hooks';
+import { regeneratePanel } from '../features/pageThunks';
+import { XCircleIcon, XIcon } from './Icons';
+import { getMediaBlob } from '../services/db';
 
 interface RegeneratePanelModalProps {
   panel: PanelData;
@@ -21,6 +22,29 @@ const RegeneratePanelModal: React.FC<RegeneratePanelModalProps> = ({
   const [prompt, setPrompt] = React.useState(panel.originalVisualPrompt);
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [imageUrl, setImageUrl] = React.useState<string | null>(null);
+  const modalRef = React.useRef<HTMLDivElement>(null);
+
+  useFocusTrap(modalRef, true, onClose);
+
+  React.useEffect(() => {
+    let objectUrl: string | undefined;
+    const loadImage = async () => {
+      if (panel.imageId) {
+        const blob = await getMediaBlob(panel.imageId);
+        if (blob) {
+          objectUrl = URL.createObjectURL(blob);
+          setImageUrl(objectUrl);
+        }
+      }
+    };
+    loadImage();
+    return () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [panel.imageId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +74,7 @@ const RegeneratePanelModal: React.FC<RegeneratePanelModalProps> = ({
       onClick={onClose}
     >
       <div
+        ref={modalRef}
         className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl transform transition-all"
         onClick={(e) => e.stopPropagation()}
       >
@@ -60,18 +85,23 @@ const RegeneratePanelModal: React.FC<RegeneratePanelModalProps> = ({
           <button
             onClick={onClose}
             className="p-1 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+            aria-label="Close"
           >
-            &times;
+            <XIcon className="w-5 h-5" />
           </button>
         </div>
 
         <div className="flex flex-col md:flex-row gap-6">
           <div className="md:w-1/3 flex-shrink-0">
-            <img
-              src={panel.imageUrl}
-              alt="Current panel image"
-              className="rounded-md w-full object-contain"
-            />
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt="Current panel image"
+                className="rounded-md w-full object-contain"
+              />
+            ) : (
+              <div className="w-full aspect-square bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
+            )}
           </div>
           <form onSubmit={handleSubmit} className="flex-grow flex flex-col">
             <label
@@ -104,7 +134,7 @@ const RegeneratePanelModal: React.FC<RegeneratePanelModalProps> = ({
               <button
                 type="submit"
                 disabled={isGenerating}
-                className="px-6 py-2 bg-indigo-600 rounded-lg font-bold text-white transition-colors shadow-lg hover:bg-indigo-700 disabled:bg-gray-500 dark:disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="px-5 py-2 bg-indigo-600 rounded-lg font-bold text-white transition-colors shadow-lg hover:bg-indigo-700 disabled:bg-gray-500 dark:disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isGenerating ? (
                   <>
@@ -123,4 +153,4 @@ const RegeneratePanelModal: React.FC<RegeneratePanelModalProps> = ({
   );
 };
 
-export default RegeneratePanelModal;
+export default React.memo(RegeneratePanelModal);

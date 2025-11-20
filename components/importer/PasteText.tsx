@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface PasteTextProps {
-  onDataChange: (data: { title: string; text: string; }) => void;
+  onDataChange: (data: { title: string; text: string }) => void;
 }
 
 const PasteText: React.FC<PasteTextProps> = ({ onDataChange }) => {
@@ -9,21 +9,24 @@ const PasteText: React.FC<PasteTextProps> = ({ onDataChange }) => {
   const [title, setTitle] = React.useState('');
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newTitle = e.target.value;
-      setTitle(newTitle);
-      onDataChange({ title: newTitle, text });
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    onDataChange({ title: newTitle, text });
   };
-  
+
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const newText = e.target.value;
-      setText(newText);
-      onDataChange({ title, text: newText });
+    const newText = e.target.value;
+    setText(newText);
+    onDataChange({ title, text: newText });
   };
 
   return (
     <div className="space-y-4">
       <div>
-        <label htmlFor="project-title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label
+          htmlFor="project-title"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+        >
           Project Title
         </label>
         <input
@@ -36,7 +39,10 @@ const PasteText: React.FC<PasteTextProps> = ({ onDataChange }) => {
         />
       </div>
       <div>
-        <label htmlFor="paste-area" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label
+          htmlFor="paste-area"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+        >
           Paste Your Text
         </label>
         <textarea

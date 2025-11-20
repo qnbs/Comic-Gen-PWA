@@ -5,9 +5,10 @@ import {
   deleteMultipleProjectsFromLibrary,
 } from '../features/librarySlice';
 import { selectFilteredAndSortedProjects } from '../features/librarySelectors';
-import type { ComicProject } from '../types';
+import type { ComicProjectMeta } from '../types';
 import type { SortOption } from '../components/comic-library/types';
-import { base64ToBlob } from '../services/utils';
+import { getMediaBlob } from '../services/db';
+import { addToast } from '../features/uiSlice';
 
 export const useComicLibrary = () => {
   const dispatch = useAppDispatch();
@@ -15,71 +16,82 @@ export const useComicLibrary = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [sortOrder, setSortOrder] = React.useState<SortOption>('date-desc');
   const [selectedProjects, setSelectedProjects] = React.useState<string[]>([]);
-  const [projectToDelete, setProjectToDelete] = React.useState<ComicProject | null>(
+  const [projectToDelete, setProjectToDelete] = React.useState<ComicProjectMeta | null>(
     null,
   );
   const [isBulkDelete, setIsBulkDelete] = React.useState(false);
   const [thumbnailUrls, setThumbnailUrls] = React.useState<
     Record<string, string>
   >({});
-  const memoizedUrls = React.useRef<Record<string, string>>({});
 
   const filteredAndSortedProjects = useAppSelector((state) =>
     selectFilteredAndSortedProjects(state, searchQuery, sortOrder),
   );
-
+  
   React.useEffect(() => {
-    const newUrls: Record<string, string> = {};
-    filteredAndSortedProjects.forEach((project) => {
-      if (memoizedUrls.current[project.id]) {
-        newUrls[project.id] = memoizedUrls.current[project.id];
-      } else if (project.pages?.[0]?.panels?.[0]?.imageUrl) {
-         // Projects store full base64 strings if saved from older versions, or blob URLs for new ones.
-        const imageUrl = project.pages[0].panels[0].imageUrl;
-        if (imageUrl.startsWith('blob:')) {
-            // It's already a URL, just use it.
-            newUrls[project.id] = imageUrl;
-        } else if (imageUrl.startsWith('data:')) {
-            // It's a base64 string, convert it.
-            const base64String = imageUrl.split(',')[1];
-            if (base64String) {
-              try {
-                const blob = base64ToBlob(base64String);
-                const url = URL.createObjectURL(blob);
-                memoizedUrls.current[project.id] = url;
-                newUrls[project.id] = url;
-              } catch (e) {
-                console.error(`Failed to create blob for project ${project.id}`, e);
-              }
-            }
+    const currentUrls = { ...thumbnailUrls };
+    let didUpdate = false;
+
+    const loadThumbnails = async () => {
+      for (const project of filteredAndSortedProjects) {
+        if (!currentUrls[project.id] && project.thumbnailId) {
+          const blob = await getMediaBlob(project.thumbnailId);
+          if (blob) {
+            currentUrls[project.id] = URL.createObjectURL(blob);
+            didUpdate = true;
+          }
         }
       }
-    });
-    setThumbnailUrls(newUrls);
+      if (didUpdate) {
+        setThumbnailUrls(currentUrls);
+      }
+    };
 
-    // Main cleanup on unmount
+    loadThumbnails();
+
     return () => {
-      Object.values(memoizedUrls.current).forEach(URL.revokeObjectURL);
-      memoizedUrls.current = {};
+      // Revoke URLs only for projects that are no longer in the view
+      const visibleIds = new Set(filteredAndSortedProjects.map(p => p.id));
+      Object.keys(thumbnailUrls).forEach(id => {
+        if (!visibleIds.has(id)) {
+          URL.revokeObjectURL(thumbnailUrls[id]);
+        }
+      });
     };
   }, [filteredAndSortedProjects]);
 
-  const handleSingleDelete = React.useCallback((project: ComicProject) => {
+
+  const handleSingleDelete = React.useCallback((project: ComicProjectMeta) => {
     setIsBulkDelete(false);
     setProjectToDelete(project);
   }, []);
 
   const handleBulkDelete = React.useCallback(() => {
+    if (selectedProjects.length === 0) return;
     setIsBulkDelete(true);
-    setProjectToDelete({} as ComicProject); // Dummy object to open modal
-  }, []);
+    setProjectToDelete({} as ComicProjectMeta); // Dummy object to open modal
+  }, [selectedProjects]);
 
   const confirmDelete = React.useCallback(() => {
     if (isBulkDelete) {
-      dispatch(deleteMultipleProjectsFromLibrary(selectedProjects));
-      setSelectedProjects([]);
+      dispatch(deleteMultipleProjectsFromLibrary(selectedProjects))
+        .unwrap()
+        .then(() => {
+          dispatch(addToast({ message: `${selectedProjects.length} comics deleted.`, type: 'success' }));
+          setSelectedProjects([]);
+        })
+        .catch((error: unknown) => {
+          dispatch(addToast({ message: String(error), type: 'error' }));
+        });
     } else if (projectToDelete) {
-      dispatch(deleteProjectFromLibrary(projectToDelete.id));
+      dispatch(deleteProjectFromLibrary(projectToDelete.id))
+        .unwrap()
+        .then(() => {
+          dispatch(addToast({ message: `"${projectToDelete.title}" deleted.`, type: 'success' }));
+        })
+        .catch((error: unknown) => {
+          dispatch(addToast({ message: String(error), type: 'error' }));
+        });
     }
     setProjectToDelete(null);
   }, [isBulkDelete, projectToDelete, selectedProjects, dispatch]);

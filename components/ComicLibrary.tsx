@@ -2,7 +2,6 @@ import React from 'react';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { fetchProjects } from '../features/librarySlice';
 import { setCurrentPage } from '../features/uiSlice';
-import type { ComicProject } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
 import {
   ComicLibraryProvider,
@@ -15,7 +14,7 @@ import DeleteConfirmModal from './comic-library/DeleteConfirmModal';
 import { LibraryIcon } from './Icons';
 
 interface ComicLibraryProps {
-  onLoadProject: (project: ComicProject) => void;
+  onLoadProject: (projectId: string) => void;
   onBack: () => void;
 }
 

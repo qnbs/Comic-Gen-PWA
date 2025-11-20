@@ -40,4 +40,4 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   );
 };
 
-export default ErrorDisplay;
+export default React.memo(ErrorDisplay);

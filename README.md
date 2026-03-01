@@ -116,7 +116,39 @@ Follow this professional production pipeline to turn your text into a complete c
 
 ### 🚀 Getting Started
 
-This application requires a Google Gemini API key to function. The key must be configured as an environment variable (`API_KEY`) in the execution environment.
+This application requires a Google Gemini API key to function. The key is entered by the user in the app settings and stored encrypted in IndexedDB on-device.
+
+### 🌍 Live Demo
+
+`https://qnbs.github.io/Comic-Gen-PWA/`
+
+### 🚀 Deployment Instructions (GitHub Pages)
+
+1. Push changes to `main`.
+2. Open **Settings → Pages** and select **GitHub Actions** as source.
+3. Ensure workflow `.github/workflows/deploy.yml` is enabled.
+4. Wait for the workflow run to complete.
+5. Open the live URL above.
+
+### 🔐 How to set Gemini API Key
+
+1. Open **Settings → General → Gemini API Key**.
+2. Paste your API key and save it.
+3. The key is encrypted via Web Crypto and stored in IndexedDB only.
+4. Recommended restriction in Google AI Studio: `https://qnbs.github.io/Comic-Gen-PWA/*`.
+
+### 🛠️ Troubleshooting
+
+- **Blank page on GitHub Pages**: verify `base` in `vite.config.ts` is correct for the repo path.
+- **Assets not loading**: ensure `manifest` and script URLs are relative in `index.html`.
+- **Direct URL/refresh fails**: ensure root `404.html` exists for SPA fallback.
+- **Offline/PWA issues**: clear old service worker/site data and reload once online.
+
+> ⚠️ **Legal Disclaimer (Educational Use Only)**
+>
+> This software and generated content are provided for educational and creative purposes only.
+> It does not provide medical, legal, or professional advice.
+> Users are solely responsible for compliance with local laws, regulations, and platform policies.
 
 ---
 <br>
@@ -221,4 +253,36 @@ Folgen Sie dieser professionellen Produktionspipeline, um Ihren Text in ein komp
 
 ### 🚀 Erste Schritte
 
-Diese Anwendung benötigt einen Google Gemini API-Schlüssel, um zu funktionieren. Der Schlüssel muss als Umgebungsvariable (`API_KEY`) in der Ausführungsumgebung konfiguriert sein.
+Diese Anwendung benötigt einen Google Gemini API-Schlüssel, um zu funktionieren. Der Schlüssel wird in der App unter Einstellungen hinterlegt und verschlüsselt in IndexedDB auf dem Gerät gespeichert.
+
+### 🌍 Live Demo
+
+`https://qnbs.github.io/Comic-Gen-PWA/`
+
+### 🚀 Deployment-Anleitung (GitHub Pages)
+
+1. Änderungen nach `main` pushen.
+2. Unter **Settings → Pages** als Quelle **GitHub Actions** wählen.
+3. Workflow `.github/workflows/deploy.yml` aktiv lassen.
+4. Workflow durchlaufen lassen.
+5. Anschließend die Live-URL öffnen.
+
+### 🔐 Gemini API-Schlüssel setzen
+
+1. Öffnen Sie **Einstellungen → Allgemein → Gemini API-Schlüssel**.
+2. API-Schlüssel einfügen und speichern.
+3. Der Schlüssel wird mit Web Crypto verschlüsselt und nur in IndexedDB gespeichert.
+4. Empfohlene Beschränkung in Google AI Studio: `https://qnbs.github.io/Comic-Gen-PWA/*`.
+
+### 🛠️ Fehlerbehebung
+
+- **Leere Seite auf GitHub Pages**: prüfen, ob `base` in `vite.config.ts` korrekt ist.
+- **Assets laden nicht**: relative Pfade in `index.html` für Manifest und Module sicherstellen.
+- **Direktlink/Refresh schlägt fehl**: prüfen, ob `404.html` im Root liegt.
+- **Offline/PWA-Probleme**: alten Service Worker/Sitedaten löschen und neu laden.
+
+> ⚠️ **Rechtlicher Hinweis (nur Bildungszwecke)**
+>
+> Diese Software und die erzeugten Inhalte dienen ausschließlich Bildungs- und Kreativzwecken.
+> Sie stellen keine medizinische, rechtliche oder professionelle Beratung dar.
+> Nutzer sind selbst verantwortlich für die Einhaltung lokaler Gesetze, Vorschriften und Plattformrichtlinien.

@@ -274,7 +274,7 @@ const SpeechBubble: React.FC<SpeechBubbleProps> = React.memo(
          <div
           className="absolute left-1/2 -translate-x-1/2 w-0 h-0"
           style={{
-            bottom: `${(-8 * dynamicScale}px`,
+            bottom: `${-8 * dynamicScale}px`,
             borderLeft: `${8 * dynamicScale}px solid transparent`,
             borderRight: `${8 * dynamicScale}px solid transparent`,
             borderTop: bgRgb ? `${8 * dynamicScale}px solid rgba(${bgRgb.r}, ${bgRgb.g}, ${bgRgb.b}, ${opacity})` : `${8 * dynamicScale}px solid white`,

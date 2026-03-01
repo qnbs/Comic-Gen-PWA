@@ -20,12 +20,22 @@ import type {
   ImageModel,
 } from '../types';
 import { translations } from './translations';
+import { loadGeminiApiKeyDecrypted } from './secureKeyStore';
 
-if (!process.env.API_KEY) {
-  throw new Error('API_KEY environment variable not set');
+async function getApiKeyOrThrow(): Promise<string> {
+  const apiKey = await loadGeminiApiKeyDecrypted();
+  if (!apiKey) {
+    throw new Error(
+      'No Gemini API key configured. Please add your key in Settings. Keys are stored encrypted on this device.',
+    );
+  }
+  return apiKey;
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+async function getAiClient(): Promise<GoogleGenAI> {
+  const apiKey = await getApiKeyOrThrow();
+  return new GoogleGenAI({ apiKey });
+}
 
 // --- Centralized Model Configuration ---
 const MODELS = {
@@ -179,6 +189,7 @@ const sceneSchema = {
 };
 
 export async function segmentTextIntoScenes(text: string, lang: 'en' | 'de'): Promise<string[]> {
+  const ai = await getAiClient();
   const t = (key: keyof typeof translations.en.gemini) => translations[lang].gemini[key] || translations.en.gemini[key];
   const systemInstruction = t('sceneSegmentationPreamble');
   const prompt = `---TEXT---\n${text}\n---`;
@@ -210,6 +221,7 @@ export async function segmentTextIntoScenes(text: string, lang: 'en' | 'de'): Pr
 }
 
 export async function analyzeIndividualScene(sceneText: string, lang: 'en' | 'de'): Promise<Scene> {
+  const ai = await getAiClient();
   const t = (key: keyof typeof translations.en.gemini) => translations[lang].gemini[key] || translations.en.gemini[key];
   const systemInstruction = `${t('sceneAnalysisPreamble')}
     1. "originalText": ${t('originalTextPrompt')}
@@ -303,6 +315,7 @@ export async function generatePanelImage(
   advancedSettings: AdvancedGenerationSettings,
   modelPreference: ImageModel = 'gemini-3-pro' // Default to Gemini 3 Pro
 ): Promise<string> {
+  const ai = await getAiClient();
   
   const { stylePrompt, negativePrompt: styleNegativePrompt } = getStylePrompts(artStyle);
   let finalPrompt = `Dynamic comic book panel art, ${stylePrompt}${prompt}`;
@@ -394,6 +407,7 @@ export async function generatePanelImage(
 }
 
 export async function generateSpeech(text: string, voiceName: string): Promise<string> {
+  const ai = await getAiClient();
   const response = await makeApiRequest<GenerateContentResponse>(() => ai.models.generateContent({
     model: MODELS.tts,
     contents: [{ parts: [{ text }] }],
@@ -411,7 +425,7 @@ export async function generateSpeech(text: string, voiceName: string): Promise<s
 }
 
 export async function generatePanelVideo(prompt: string, aspectRatio: AspectRatio, videoSettings: VideoSettings) {
-  const videoAi = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const videoAi = await getAiClient();
   let finalPrompt = `cinematic loop, ${prompt}`;
   const motionPrompts = {
       low: 'subtle movement, slow motion, ',
@@ -432,8 +446,14 @@ export async function generatePanelVideo(prompt: string, aspectRatio: AspectRati
 }
 
 export async function pollVideoOperation(operation: Operation) {
-  const videoAi = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const videoAi = await getAiClient();
   return makeApiRequest<Operation>(() => videoAi.operations.getVideosOperation({ operation }), 'video status check');
+}
+
+export async function getAuthenticatedUrl(url: string): Promise<string> {
+  const apiKey = await getApiKeyOrThrow();
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}key=${encodeURIComponent(apiKey)}`;
 }
 
 const translate = (lang: 'en' | 'de', key: keyof typeof translations.en.gemini, replacements?: { [key: string]: string | number }) => {
@@ -472,6 +492,7 @@ const assetConfigs = {
 const generateWorldAssetSheet = async (
   assetType: WorldAssetType, assetName: string, context: string, lang: 'en' | 'de'
 ): Promise<{ description: string; imageUrl: string }> => {
+  const ai = await getAiClient();
   const config = assetConfigs[assetType];
   const nameProperty = `${assetType}Name`;
 
@@ -540,6 +561,7 @@ const wordCloudAnalysisSchema = {
 };
 
 export async function generateWordCloudAnalysis(text: string, lang: 'en' | 'de'): Promise<WordCloudAnalysis> {
+  const ai = await getAiClient();
   const systemInstruction = translate(lang, 'wordCloudAnalysisPrompt');
   const prompt = `---TEXT---\n${text}\n---`;
 

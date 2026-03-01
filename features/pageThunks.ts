@@ -251,9 +251,8 @@ export const generatePanelVideo = createAsyncThunk<
         );
       }
 
-      const response = await fetch(
-        `${downloadLink}&key=${process.env.API_KEY}`,
-      );
+      const authenticatedUrl = await geminiService.getAuthenticatedUrl(downloadLink);
+      const response = await fetch(authenticatedUrl);
       if (!response.ok) {
         throw new Error(
           `Failed to download video file: ${response.statusText}`,

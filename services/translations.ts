@@ -304,6 +304,13 @@ const en = {
     clearDataConfirmation:
       'Are you sure you want to delete all data? This cannot be undone.',
     backButton: 'Back to Creator',
+    apiKeyTitle: 'Gemini API Key',
+    apiKeyDescription:
+      'Provide your own Gemini API key. It is encrypted and stored only on this device in IndexedDB.',
+    apiKeyConfigured: 'Key configured',
+    apiKeyMissing: 'No key configured',
+    apiKeySecurityHint:
+      'Security recommendation: restrict this key in Google AI Studio to https://qnbs.github.io/Comic-Gen-PWA/*',
   },
   projectOverview: {
     chapters: 'Chapters',
@@ -802,6 +809,13 @@ const de: typeof en = {
     clearDataConfirmation:
       'Sind Sie sicher, dass Sie alle Daten löschen möchten? Dies kann nicht rückgängig gemacht werden.',
     backButton: 'Zurück zum Editor',
+    apiKeyTitle: 'Gemini API-Schlüssel',
+    apiKeyDescription:
+      'Hinterlegen Sie Ihren eigenen Gemini API-Schlüssel. Er wird verschlüsselt und nur auf diesem Gerät in IndexedDB gespeichert.',
+    apiKeyConfigured: 'Schlüssel konfiguriert',
+    apiKeyMissing: 'Kein Schlüssel konfiguriert',
+    apiKeySecurityHint:
+      'Sicherheitshinweis: Schlüssel in Google AI Studio auf https://qnbs.github.io/Comic-Gen-PWA/* beschränken',
   },
   projectOverview: {
     chapters: 'Kapitel',

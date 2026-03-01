@@ -25,6 +25,11 @@ import {
   DataSettings,
   Preset,
 } from '../types';
+import {
+  saveGeminiApiKeyEncrypted,
+  clearGeminiApiKeyEncrypted,
+  hasGeminiApiKeyEncrypted,
+} from '../services/secureKeyStore';
 
 export type SettingsTab = 'generation' | 'general' | 'data';
 
@@ -46,6 +51,8 @@ export const useSettingsPage = () => {
     quota: 0,
     percent: 0,
   });
+  const [geminiApiKeyInput, setGeminiApiKeyInput] = React.useState('');
+  const [hasGeminiApiKey, setHasGeminiApiKey] = React.useState(false);
 
   React.useEffect(() => {
     if (presetsState.status === 'idle') {
@@ -69,6 +76,12 @@ export const useSettingsPage = () => {
       }
     };
     estimateStorage();
+  }, []);
+
+  React.useEffect(() => {
+    hasGeminiApiKeyEncrypted()
+      .then(setHasGeminiApiKey)
+      .catch(() => setHasGeminiApiKey(false));
   }, []);
 
   const handleShowSpeechBubblesChange = React.useCallback(
@@ -219,6 +232,44 @@ export const useSettingsPage = () => {
     [dispatch],
   );
 
+  const handleSaveGeminiApiKey = React.useCallback(async () => {
+    const trimmed = geminiApiKeyInput.trim();
+    if (!trimmed || trimmed.length < 20) {
+      dispatch(
+        addToast({ message: 'Please provide a valid Gemini API key.', type: 'error' }),
+      );
+      return;
+    }
+
+    try {
+      await saveGeminiApiKeyEncrypted(trimmed);
+      setGeminiApiKeyInput('');
+      setHasGeminiApiKey(true);
+      dispatch(
+        addToast({ message: 'Gemini API key saved securely.', type: 'success' }),
+      );
+    } catch (error: unknown) {
+      dispatch(
+        addToast({ message: String(error), type: 'error' }),
+      );
+    }
+  }, [dispatch, geminiApiKeyInput]);
+
+  const handleRemoveGeminiApiKey = React.useCallback(async () => {
+    try {
+      await clearGeminiApiKeyEncrypted();
+      setHasGeminiApiKey(false);
+      setGeminiApiKeyInput('');
+      dispatch(
+        addToast({ message: 'Gemini API key removed.', type: 'info' }),
+      );
+    } catch (error: unknown) {
+      dispatch(
+        addToast({ message: String(error), type: 'error' }),
+      );
+    }
+  }, [dispatch]);
+
   return {
     settings,
     theme,
@@ -242,6 +293,11 @@ export const useSettingsPage = () => {
     handleSavePreset,
     handleDeletePreset,
     handleApplyPreset,
+    geminiApiKeyInput,
+    setGeminiApiKeyInput,
+    hasGeminiApiKey,
+    handleSaveGeminiApiKey,
+    handleRemoveGeminiApiKey,
   };
 };
 

@@ -8,6 +8,7 @@ import {
   updateGenerationSettings,
   updateAccessibilitySettings,
   updateDataSettings,
+  resetSettingsToDefaults,
 } from '../features/settingsSlice';
 import { clearAllData, exportAllProjects, importProject } from '../features/librarySlice';
 import { discardSession } from '../features/projectSlice';
@@ -161,14 +162,14 @@ export const useSettingsPage = () => {
         try {
           const text = e.target?.result;
           if (typeof text !== 'string') {
-            throw new Error('File could not be read as text.');
+            throw new Error(t('settingsPage.importReadError'));
           }
           const importedSettings: unknown = JSON.parse(text);
 
           if (isAppSettings(importedSettings)) {
             dispatch(setSettings(importedSettings));
           } else {
-            throw new Error('Imported settings file has an invalid format.');
+            throw new Error(t('settingsPage.importInvalidFormat'));
           }
         } catch (error: unknown) {
           console.error('Failed to import settings:', error);
@@ -238,7 +239,7 @@ export const useSettingsPage = () => {
     const trimmed = geminiApiKeyInput.trim();
     if (!trimmed || trimmed.length < 20) {
       dispatch(
-        addToast({ message: 'Please provide a valid Gemini API key.', type: 'error' }),
+        addToast({ message: t('settingsPage.invalidApiKey'), type: 'error' }),
       );
       return;
     }
@@ -248,14 +249,14 @@ export const useSettingsPage = () => {
       setGeminiApiKeyInput('');
       setHasGeminiApiKey(true);
       dispatch(
-        addToast({ message: 'Gemini API key saved securely.', type: 'success' }),
+        addToast({ message: t('settingsPage.apiKeySaved'), type: 'success' }),
       );
     } catch (error: unknown) {
       dispatch(
         addToast({ message: String(error), type: 'error' }),
       );
     }
-  }, [dispatch, geminiApiKeyInput]);
+  }, [dispatch, geminiApiKeyInput, t]);
 
   const handleRemoveGeminiApiKey = React.useCallback(async () => {
     try {
@@ -263,14 +264,19 @@ export const useSettingsPage = () => {
       setHasGeminiApiKey(false);
       setGeminiApiKeyInput('');
       dispatch(
-        addToast({ message: 'Gemini API key removed.', type: 'info' }),
+        addToast({ message: t('settingsPage.apiKeyRemoved'), type: 'info' }),
       );
     } catch (error: unknown) {
       dispatch(
         addToast({ message: String(error), type: 'error' }),
       );
     }
-  }, [dispatch]);
+  }, [dispatch, t]);
+
+  const handleResetAllSettings = React.useCallback(() => {
+    dispatch(resetSettingsToDefaults());
+    dispatch(addToast({ message: t('settingsPage.resetDone'), type: 'success' }));
+  }, [dispatch, t]);
 
   return {
     settings,
@@ -295,6 +301,7 @@ export const useSettingsPage = () => {
     handleSavePreset,
     handleDeletePreset,
     handleApplyPreset,
+    handleResetAllSettings,
     geminiApiKeyInput,
     setGeminiApiKeyInput,
     hasGeminiApiKey,

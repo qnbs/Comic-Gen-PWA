@@ -144,6 +144,19 @@ This application requires a Google Gemini API key to function. The key is entere
 - **Direct URL/refresh fails**: ensure root `404.html` exists for SPA fallback.
 - **Offline/PWA issues**: clear old service worker/site data and reload once online.
 
+### ✅ Smoke-Check Runbook (Release Checklist)
+
+Use this quick checklist before every release/deploy:
+
+- [ ] **Import flow**: Test all three inputs (Online Library, `.txt` upload, Paste Text).
+- [ ] **Project generation**: Create a project, verify chapter/scene extraction and no blocking errors.
+- [ ] **Settings flow**: Open `Settings → Generation/General/Data`, save values, reload app, verify persistence.
+- [ ] **Help flow**: Open Help page from app navigation and verify content renders in current language.
+- [ ] **Export flow**: Export at least one comic as PDF and CBZ and open both files.
+- [ ] **Library flow**: Save/load/delete one project from Comic Library.
+- [ ] **PWA basics**: Confirm app shell loads offline after one successful online session.
+- [ ] **Deployment sanity**: Verify GitHub Actions Pages run is green and live URL returns HTTP 200.
+
 > ⚠️ **Legal Disclaimer (Educational Use Only)**
 >
 > This software and generated content are provided for educational and creative purposes only.
@@ -258,6 +271,19 @@ Diese Anwendung benötigt einen Google Gemini API-Schlüssel, um zu funktioniere
 ### 🌍 Live Demo
 
 `https://qnbs.github.io/Comic-Gen-PWA/`
+
+### ✅ Smoke-Check Runbook (Release-Checkliste)
+
+Diese kurze Checkliste vor jedem Release/Deploy durchgehen:
+
+- [ ] **Import-Flow**: Alle drei Eingaben testen (Online-Bibliothek, `.txt`-Upload, Texteingabe).
+- [ ] **Projektgenerierung**: Projekt erstellen, Kapitel-/Szenenextraktion und fehlende Blocker prüfen.
+- [ ] **Settings-Flow**: `Einstellungen → Generierung/Allgemein/Daten` öffnen, Werte speichern, App neu laden, Persistenz prüfen.
+- [ ] **Hilfe-Flow**: Hilfe-Seite über die Navigation öffnen und Rendering in aktiver Sprache prüfen.
+- [ ] **Export-Flow**: Mindestens einen Comic als PDF und CBZ exportieren und beide Dateien öffnen.
+- [ ] **Bibliothek**: Ein Projekt in der Comic-Bibliothek speichern/laden/löschen.
+- [ ] **PWA-Basics**: Nach einer Online-Session prüfen, dass die App-Shell offline lädt.
+- [ ] **Deployment-Sanity**: GitHub-Actions-Pages-Run grün und Live-URL mit HTTP 200.
 
 ### 🚀 Deployment-Anleitung (GitHub Pages)
 

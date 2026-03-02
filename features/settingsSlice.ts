@@ -5,6 +5,12 @@ import {
   SpeechBubbleSettings,
   AccessibilitySettings,
   DataSettings,
+  LayoutAlgorithm,
+  ImageQuality,
+  AspectRatio,
+  SpeechBubbleStyle,
+  SpeechBubblePlacement,
+  ImageModel,
 } from '../types';
 
 const SETTINGS_STORAGE_KEY = 'comicGenSettings';
@@ -55,6 +61,183 @@ const defaultState: AppSettings = {
   },
 };
 
+const enumIncludes = <T extends string>(
+  values: readonly T[],
+  candidate: unknown,
+): candidate is T => typeof candidate === 'string' && values.includes(candidate as T);
+
+const clampNumber = (
+  value: unknown,
+  min: number,
+  max: number,
+  fallback: number,
+): number => {
+  if (typeof value !== 'number' || Number.isNaN(value)) return fallback;
+  return Math.min(max, Math.max(min, value));
+};
+
+const sanitizeHexColor = (value: unknown, fallback: string): string => {
+  if (typeof value !== 'string') return fallback;
+  return /^#(?:[0-9a-fA-F]{3}){1,2}$/.test(value) ? value : fallback;
+};
+
+const sanitizeString = (value: unknown, fallback: string, maxLength = 256): string => {
+  if (typeof value !== 'string') return fallback;
+  const normalized = value.trim();
+  return normalized.length > maxLength ? normalized.slice(0, maxLength) : normalized;
+};
+
+const sanitizeSettings = (source: AppSettings): AppSettings => {
+  const layoutAlgorithms: LayoutAlgorithm[] = [
+    'squarified',
+    'strip',
+    'binary',
+    'grid',
+    'column',
+  ];
+  const imageQualities: ImageQuality[] = ['low', 'medium', 'high'];
+  const aspectRatios: AspectRatio[] = ['1:1', '4:3', '3:4', '16:9', '9:16'];
+  const bubbleStyles: SpeechBubbleStyle[] = ['rounded', 'sharp', 'cloud'];
+  const bubblePlacements: SpeechBubblePlacement[] = ['physics', 'static'];
+  const imageModels: ImageModel[] = ['gemini-3-pro', 'nano-banana', 'imagen-4'];
+  const panelDensities = ['low', 'medium', 'high'] as const;
+  const videoResolutions = ['720p', '1080p'] as const;
+  const videoMotions = ['low', 'medium', 'high'] as const;
+
+  const speech = source.speechBubbles;
+  const generation = source.generation;
+
+  const seed = generation.advanced.seed;
+  const sanitizedSeed =
+    typeof seed === 'number' && Number.isFinite(seed)
+      ? Math.max(0, Math.floor(seed))
+      : null;
+
+  return {
+    showSpeechBubbles:
+      typeof source.showSpeechBubbles === 'boolean'
+        ? source.showSpeechBubbles
+        : defaultState.showSpeechBubbles,
+    speechBubbles: {
+      style: enumIncludes(bubbleStyles, speech.style)
+        ? speech.style
+        : defaultState.speechBubbles.style,
+      fontSize: Math.round(
+        clampNumber(
+          speech.fontSize,
+          8,
+          48,
+          defaultState.speechBubbles.fontSize,
+        ),
+      ),
+      fontFamily: sanitizeString(
+        speech.fontFamily,
+        defaultState.speechBubbles.fontFamily,
+        120,
+      ),
+      backgroundColor: sanitizeHexColor(
+        speech.backgroundColor,
+        defaultState.speechBubbles.backgroundColor,
+      ),
+      textColor: sanitizeHexColor(
+        speech.textColor,
+        defaultState.speechBubbles.textColor,
+      ),
+      strokeColor: sanitizeHexColor(
+        speech.strokeColor,
+        defaultState.speechBubbles.strokeColor,
+      ),
+      strokeWidth: Math.round(
+        clampNumber(
+          speech.strokeWidth,
+          0,
+          8,
+          defaultState.speechBubbles.strokeWidth,
+        ),
+      ),
+      opacity: clampNumber(speech.opacity, 0.1, 1, defaultState.speechBubbles.opacity),
+      ttsVoice: sanitizeString(speech.ttsVoice, defaultState.speechBubbles.ttsVoice, 50),
+      placementAlgorithm: enumIncludes(bubblePlacements, speech.placementAlgorithm)
+        ? speech.placementAlgorithm
+        : defaultState.speechBubbles.placementAlgorithm,
+    },
+    generation: {
+      imageModel: enumIncludes(imageModels, generation.imageModel)
+        ? generation.imageModel
+        : defaultState.generation.imageModel,
+      layoutAlgorithm: enumIncludes(layoutAlgorithms, generation.layoutAlgorithm)
+        ? generation.layoutAlgorithm
+        : defaultState.generation.layoutAlgorithm,
+      imageQuality: enumIncludes(imageQualities, generation.imageQuality)
+        ? generation.imageQuality
+        : defaultState.generation.imageQuality,
+      artStyle: sanitizeString(generation.artStyle, defaultState.generation.artStyle, 120),
+      negativePrompt: sanitizeString(
+        generation.negativePrompt,
+        defaultState.generation.negativePrompt,
+        600,
+      ),
+      aspectRatio: enumIncludes(aspectRatios, generation.aspectRatio)
+        ? generation.aspectRatio
+        : defaultState.generation.aspectRatio,
+      gutterWidth: Math.round(
+        clampNumber(generation.gutterWidth, 0, 64, defaultState.generation.gutterWidth),
+      ),
+      pageBorder: {
+        enabled:
+          typeof generation.pageBorder.enabled === 'boolean'
+            ? generation.pageBorder.enabled
+            : defaultState.generation.pageBorder.enabled,
+        color: sanitizeHexColor(
+          generation.pageBorder.color,
+          defaultState.generation.pageBorder.color,
+        ),
+      },
+      panelDensity: enumIncludes(panelDensities, generation.panelDensity)
+        ? generation.panelDensity
+        : defaultState.generation.panelDensity,
+      advanced: {
+        seed: sanitizedSeed,
+        temperature: clampNumber(
+          generation.advanced.temperature,
+          0,
+          1,
+          defaultState.generation.advanced.temperature,
+        ),
+        topK: Math.round(
+          clampNumber(generation.advanced.topK, 1, 100, defaultState.generation.advanced.topK),
+        ),
+        topP: clampNumber(
+          generation.advanced.topP,
+          0,
+          1,
+          defaultState.generation.advanced.topP,
+        ),
+      },
+      video: {
+        resolution: enumIncludes(videoResolutions, generation.video.resolution)
+          ? generation.video.resolution
+          : defaultState.generation.video.resolution,
+        motion: enumIncludes(videoMotions, generation.video.motion)
+          ? generation.video.motion
+          : defaultState.generation.video.motion,
+      },
+    },
+    accessibility: {
+      reduceMotion:
+        typeof source.accessibility.reduceMotion === 'boolean'
+          ? source.accessibility.reduceMotion
+          : defaultState.accessibility.reduceMotion,
+    },
+    data: {
+      autoSave:
+        typeof source.data.autoSave === 'boolean'
+          ? source.data.autoSave
+          : defaultState.data.autoSave,
+    },
+  };
+};
+
 const isObject = (item: unknown): item is Record<string, unknown> => {
   return item !== null && typeof item === 'object' && !Array.isArray(item);
 };
@@ -88,12 +271,12 @@ const getInitialState = (): AppSettings => {
     const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
     if (savedSettings) {
       const parsed = JSON.parse(savedSettings);
-      return mergeDeep(defaultState, parsed);
+      return sanitizeSettings(mergeDeep(defaultState, parsed));
     }
   } catch (e: unknown) {
     console.error('Could not load settings from local storage', e);
   }
-  return defaultState;
+  return sanitizeSettings(defaultState);
 };
 
 const initialState: AppSettings = getInitialState();
@@ -103,7 +286,7 @@ const settingsSlice = createSlice({
   initialState,
   reducers: {
     setSettings(state, action: PayloadAction<Partial<AppSettings>>) {
-      return mergeDeep(state, action.payload);
+      return sanitizeSettings(mergeDeep(state, action.payload));
     },
     updateShowSpeechBubbles(state, action: PayloadAction<boolean>) {
       state.showSpeechBubbles = action.payload;
@@ -129,6 +312,9 @@ const settingsSlice = createSlice({
     updateDataSettings(state, action: PayloadAction<Partial<DataSettings>>) {
       state.data = { ...state.data, ...action.payload };
     },
+    resetSettingsToDefaults() {
+      return sanitizeSettings(structuredClone(defaultState));
+    },
   },
 });
 
@@ -139,6 +325,7 @@ export const {
   updateGenerationSettings,
   updateAccessibilitySettings,
   updateDataSettings,
+  resetSettingsToDefaults,
 } = settingsSlice.actions;
 
 export default settingsSlice.reducer;

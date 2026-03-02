@@ -199,16 +199,16 @@ const DataSettings: React.FC = () => {
             {t('settingsPage.dataManagement')}
           </h4>
            <p className="text-sm text-red-600 dark:text-red-300 mb-3">
-            Export all your projects and media into a single backup file, or import from a backup.
+            {t('settingsPage.backupDescription')}
           </p>
           <div className="flex gap-4 mb-3">
             <button onClick={handleExportAllData} className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors">
                 <ArchiveIcon className="w-5 h-5" />
-                Export All
+                {t('settingsPage.exportAll')}
             </button>
             <button onClick={() => importProjectsRef.current?.click()} className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors">
                 <UploadIcon className="w-5 h-5" />
-                Import Backup
+                {t('settingsPage.importBackup')}
             </button>
              <input
               type="file"

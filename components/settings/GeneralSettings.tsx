@@ -3,8 +3,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { useSettingsPageContext } from '../../contexts/SettingsPageContext';
 import LanguageSelector from '../LanguageSelector';
 import { MoonIcon, SunIcon } from '../Icons';
-import { SpeechBubbleStyle, SpeechBubblePlacement } from '../../types';
-import { TranslationKeys } from '../../services/translations';
+import { SpeechBubblePlacement, SpeechBubbleStyle } from '../../types';
 
 const GeneralSettings: React.FC = () => {
   const { t } = useTranslation();
@@ -23,7 +22,6 @@ const GeneralSettings: React.FC = () => {
   } = useSettingsPageContext();
 
   const { showSpeechBubbles, speechBubbles, accessibility } = settings;
-
   const ttsVoices = ['Zephyr', 'Kore', 'Puck', 'Charon', 'Fenrir'];
 
   return (
@@ -71,7 +69,7 @@ const GeneralSettings: React.FC = () => {
         </div>
       </div>
 
-      <div className="border-t border-gray-200 dark:border-gray-700"></div>
+      <div className="border-t border-gray-200 dark:border-gray-700" />
 
       <div>
         <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
@@ -92,6 +90,7 @@ const GeneralSettings: React.FC = () => {
             className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
           />
         </div>
+
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <label
@@ -116,6 +115,7 @@ const GeneralSettings: React.FC = () => {
               <option value="cloud">{t('settings.styleCloud')}</option>
             </select>
           </div>
+
           <div className="flex items-center justify-between">
             <label
               htmlFor="bubble-font-family"
@@ -131,17 +131,14 @@ const GeneralSettings: React.FC = () => {
               }
               className="w-48 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-1 text-sm"
             >
-              <option value="'Bangers', cursive">
-                {t('settings.fontBangers')}
-              </option>
-              <option value="'Comic Neue', cursive">
-                {t('settings.fontComicNeue')}
-              </option>
+              <option value="'Bangers', cursive">{t('settings.fontBangers')}</option>
+              <option value="'Comic Neue', cursive">{t('settings.fontComicNeue')}</option>
               <option value="'Architects Daughter', cursive">
                 {t('settings.fontArchitectsDaughter')}
               </option>
             </select>
           </div>
+
           <div>
             <label className="font-medium text-gray-700 dark:text-gray-300 text-sm">
               {t('settings.bubbleFontSize')}: {speechBubbles.fontSize}px
@@ -157,17 +154,43 @@ const GeneralSettings: React.FC = () => {
               className="w-full"
             />
           </div>
+
           <div className="flex items-center justify-between">
             <label className="font-medium text-gray-700 dark:text-gray-300 text-sm">
               {t('settings.bubbleColors')}
             </label>
             <div className="flex gap-2">
-              <input type="color" title={t('settings.backgroundColor')} value={speechBubbles.backgroundColor} onChange={(e) => handleSpeechBubbleSettingChange('backgroundColor', e.target.value)} className="w-9 h-8 p-0 border-none rounded-md cursor-pointer" />
-              <input type="color" title={t('settings.textColor')} value={speechBubbles.textColor} onChange={(e) => handleSpeechBubbleSettingChange('textColor', e.target.value)} className="w-9 h-8 p-0 border-none rounded-md cursor-pointer" />
-              <input type="color" title={t('settings.strokeColor')} value={speechBubbles.strokeColor} onChange={(e) => handleSpeechBubbleSettingChange('strokeColor', e.target.value)} className="w-9 h-8 p-0 border-none rounded-md cursor-pointer" />
+              <input
+                type="color"
+                title={t('settings.backgroundColor')}
+                value={speechBubbles.backgroundColor}
+                onChange={(e) =>
+                  handleSpeechBubbleSettingChange('backgroundColor', e.target.value)
+                }
+                className="w-9 h-8 p-0 border-none rounded-md cursor-pointer"
+              />
+              <input
+                type="color"
+                title={t('settings.textColor')}
+                value={speechBubbles.textColor}
+                onChange={(e) =>
+                  handleSpeechBubbleSettingChange('textColor', e.target.value)
+                }
+                className="w-9 h-8 p-0 border-none rounded-md cursor-pointer"
+              />
+              <input
+                type="color"
+                title={t('settings.strokeColor')}
+                value={speechBubbles.strokeColor}
+                onChange={(e) =>
+                  handleSpeechBubbleSettingChange('strokeColor', e.target.value)
+                }
+                className="w-9 h-8 p-0 border-none rounded-md cursor-pointer"
+              />
             </div>
           </div>
-           <div>
+
+          <div>
             <label className="font-medium text-gray-700 dark:text-gray-300 text-sm">
               {t('settings.bubbleOpacity')}: {Math.round(speechBubbles.opacity * 100)}%
             </label>
@@ -183,6 +206,7 @@ const GeneralSettings: React.FC = () => {
               className="w-full"
             />
           </div>
+
           <div className="flex items-center justify-between">
             <label
               htmlFor="tts-voice"
@@ -205,31 +229,33 @@ const GeneralSettings: React.FC = () => {
               ))}
             </select>
           </div>
+
           <div className="flex items-center justify-between">
             <label className="font-medium text-gray-700 dark:text-gray-300 text-sm">
               {t('settings.placementAlgorithm')}
             </label>
             <div className="flex bg-gray-100 dark:bg-gray-900 rounded-md p-1">
-              {(['physics', 'static'] as SpeechBubblePlacement[]).map((p) => (
+              {(['physics', 'static'] as SpeechBubblePlacement[]).map((algorithm) => (
                 <button
-                  key={p}
+                  key={algorithm}
                   onClick={() =>
-                    handleSpeechBubbleSettingChange('placementAlgorithm', p)
+                    handleSpeechBubbleSettingChange('placementAlgorithm', algorithm)
                   }
                   className={`px-2 py-1 text-xs rounded transition-colors capitalize ${
-                    speechBubbles.placementAlgorithm === p
+                    speechBubbles.placementAlgorithm === algorithm
                       ? 'bg-indigo-600 text-white'
                       : 'text-gray-500 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-700'
                   }`}
                 >
-                  {p}
+                  {algorithm}
                 </button>
               ))}
             </div>
           </div>
         </div>
       </div>
-      <div className="border-t border-gray-200 dark:border-gray-700"></div>
+
+      <div className="border-t border-gray-200 dark:border-gray-700" />
 
       <div>
         <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
@@ -239,7 +265,10 @@ const GeneralSettings: React.FC = () => {
           {t('settingsPage.apiKeyDescription')}
         </p>
         <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="gemini-api-key-input">
+          <label
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            htmlFor="gemini-api-key-input"
+          >
             {t('settingsPage.apiKeyLabel')}
           </label>
           <input
@@ -265,7 +294,9 @@ const GeneralSettings: React.FC = () => {
               {t('common.delete')}
             </button>
             <span className="text-xs text-gray-600 dark:text-gray-400">
-              {hasGeminiApiKey ? t('settingsPage.apiKeyConfigured') : t('settingsPage.apiKeyMissing')}
+              {hasGeminiApiKey
+                ? t('settingsPage.apiKeyConfigured')
+                : t('settingsPage.apiKeyMissing')}
             </span>
           </div>
           <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-2 rounded-md">

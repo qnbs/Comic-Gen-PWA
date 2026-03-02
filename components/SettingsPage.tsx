@@ -11,7 +11,23 @@ import DataSettings from './settings/DataSettings';
 
 const SettingsPageContent: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { t } = useTranslation();
-  const { activeTab } = useSettingsPageContext();
+  const { activeTab, handleResetAllSettings } = useSettingsPageContext();
+  const [confirmReset, setConfirmReset] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!confirmReset) return;
+    const timer = setTimeout(() => setConfirmReset(false), 2500);
+    return () => clearTimeout(timer);
+  }, [confirmReset]);
+
+  const onResetClick = () => {
+    if (!confirmReset) {
+      setConfirmReset(true);
+      return;
+    }
+    setConfirmReset(false);
+    handleResetAllSettings();
+  };
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 sm:p-8 bg-white/50 dark:bg-gray-800/50 rounded-2xl border border-gray-300 dark:border-gray-700 shadow-2xl">
@@ -27,7 +43,19 @@ const SettingsPageContent: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         {activeTab === 'data' && <DataSettings />}
       </div>
 
-      <div className="mt-8 text-center">
+      <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button
+          onClick={onResetClick}
+          className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+            confirmReset
+              ? 'bg-red-600 hover:bg-red-700 text-white'
+              : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white'
+          }`}
+        >
+          {confirmReset
+            ? `${t('settingsPage.clickAgainToConfirm')}`
+            : t('settingsPage.resetAll')}
+        </button>
         <button
           onClick={onBack}
           className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-colors"

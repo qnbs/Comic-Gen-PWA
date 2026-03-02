@@ -72,7 +72,7 @@ const GenerationSettings: React.FC = () => {
             onChange={(e) =>
               handleGenerationSettingChange('artStyle', e.target.value)
             }
-            placeholder="e.g., 90s comic, synthwave"
+            placeholder={t('settings.artStylePlaceholder')}
             className="w-full bg-gray-50 dark:bg-gray-900/50 border-transparent focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all rounded-xl px-4 py-2 outline-none"
           />
           <datalist id="art-style-presets">
@@ -101,20 +101,20 @@ const GenerationSettings: React.FC = () => {
           <summary className="font-semibold cursor-pointer text-gray-700 dark:text-gray-300">{t('settings.advancedOptions')}</summary>
           <div className="mt-4 space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
              <div>
-                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Seed</label>
-                <input type="number" placeholder="Random" value={generation.advanced.seed ?? ''} onChange={e => handleAdvancedChange('seed', e.target.value === '' ? null : parseInt(e.target.value))} className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-sm" />
+               <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">{t('settings.seed')}</label>
+               <input type="number" placeholder={t('settings.random')} value={generation.advanced.seed ?? ''} onChange={e => handleAdvancedChange('seed', e.target.value === '' ? null : parseInt(e.target.value))} className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-sm" />
              </div>
              <div>
-                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Temperature: {generation.advanced.temperature.toFixed(2)}</label>
-                <input type="range" min="0" max="1" step="0.05" value={generation.advanced.temperature} onChange={e => handleAdvancedChange('temperature', parseFloat(e.target.value))} className="w-full accent-indigo-600" aria-label="Temperature" />
+               <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">{t('settings.temperature')}: {generation.advanced.temperature.toFixed(2)}</label>
+               <input type="range" min="0" max="1" step="0.05" value={generation.advanced.temperature} onChange={e => handleAdvancedChange('temperature', parseFloat(e.target.value))} className="w-full accent-indigo-600" aria-label={t('settings.temperature')} />
              </div>
              <div>
-                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Top-P: {generation.advanced.topP.toFixed(2)}</label>
-                <input type="range" min="0" max="1" step="0.01" value={generation.advanced.topP} onChange={e => handleAdvancedChange('topP', parseFloat(e.target.value))} className="w-full accent-indigo-600" aria-label="Top-P" />
+               <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">{t('settings.topP')}: {generation.advanced.topP.toFixed(2)}</label>
+               <input type="range" min="0" max="1" step="0.01" value={generation.advanced.topP} onChange={e => handleAdvancedChange('topP', parseFloat(e.target.value))} className="w-full accent-indigo-600" aria-label={t('settings.topP')} />
              </div>
              <div>
-                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Top-K: {generation.advanced.topK}</label>
-                <input type="range" min="1" max="100" step="1" value={generation.advanced.topK} onChange={e => handleAdvancedChange('topK', parseInt(e.target.value))} className="w-full accent-indigo-600" aria-label="Top-K" />
+               <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">{t('settings.topK')}: {generation.advanced.topK}</label>
+               <input type="range" min="1" max="100" step="1" value={generation.advanced.topK} onChange={e => handleAdvancedChange('topK', parseInt(e.target.value))} className="w-full accent-indigo-600" aria-label={t('settings.topK')} />
              </div>
           </div>
         </details>

@@ -88,7 +88,7 @@ const OnlineLibraryBrowser: React.FC = () => {
         <div className="text-center text-gray-500 dark:text-gray-400 py-16 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700">
             <SearchIcon className="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
             <h4 className="font-bold text-lg mb-1">{t('importer.noResults')}</h4>
-            <p className="text-sm">Try searching for a different title or author.</p>
+            <p className="text-sm">{t('importer.noResultsHint')}</p>
         </div>
       );
     }
@@ -141,7 +141,7 @@ const OnlineLibraryBrowser: React.FC = () => {
         </div>
         
         <div className="flex flex-wrap justify-center gap-2">
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center mr-1">SOURCES:</span>
+          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center mr-1">{t('importer.sourcesLabel')}</span>
             <SourceFilterButton source="gutenberg" isEnabled={enabledSources.includes('gutenberg')} onClick={() => handleToggleSource('gutenberg')} />
             <SourceFilterButton source="openlibrary" isEnabled={enabledSources.includes('openlibrary')} onClick={() => handleToggleSource('openlibrary')} />
         </div>

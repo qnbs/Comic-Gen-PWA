@@ -210,8 +210,8 @@ const BookCard: React.FC<BookCardProps> = React.memo(({ book }) => {
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
             className="absolute top-3 right-3 p-2 bg-black/30 hover:bg-black/50 text-white rounded-full z-10 opacity-0 group-hover:opacity-100 transition-all backdrop-blur-md border border-white/20 transform hover:scale-110"
-            title="View original source"
-            aria-label="View original source"
+          title={t('importer.viewOriginalSource')}
+          aria-label={t('importer.viewOriginalSource')}
         >
             <LinkIcon className="w-4 h-4" />
         </a>

@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 
 const LanguageSelector: React.FC = () => {
-  const { language, setLanguage } = useTranslation();
+  const { language, setLanguage, t } = useTranslation();
 
   const handleLanguageChange = (lang: 'en' | 'de') => {
     setLanguage(lang);
@@ -17,8 +17,8 @@ const LanguageSelector: React.FC = () => {
             ? 'bg-indigo-600 text-white'
             : 'hover:bg-gray-300 dark:hover:bg-gray-700'
         }`}
-        aria-label="Switch to English"
-        title="English"
+        aria-label={t('settingsPage.switchToEnglish')}
+        title={t('settingsPage.languageEnglish')}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -70,8 +70,8 @@ const LanguageSelector: React.FC = () => {
             ? 'bg-indigo-600 text-white'
             : 'hover:bg-gray-300 dark:hover:bg-gray-700'
         }`}
-        aria-label="Switch to German"
-        title="Deutsch"
+        aria-label={t('settingsPage.switchToGerman')}
+        title={t('settingsPage.languageGerman')}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

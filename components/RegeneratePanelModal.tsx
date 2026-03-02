@@ -85,7 +85,7 @@ const RegeneratePanelModal: React.FC<RegeneratePanelModalProps> = ({
           <button
             onClick={onClose}
             className="p-1 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-            aria-label="Close"
+            aria-label={t('regenerateModal.closeAria')}
           >
             <XIcon className="w-5 h-5" />
           </button>
@@ -96,7 +96,7 @@ const RegeneratePanelModal: React.FC<RegeneratePanelModalProps> = ({
             {imageUrl ? (
               <img
                 src={imageUrl}
-                alt="Current panel image"
+                alt={t('regenerateModal.currentPanelImageAlt')}
                 className="rounded-md w-full object-contain"
               />
             ) : (

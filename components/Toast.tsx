@@ -3,9 +3,11 @@ import { useAppDispatch } from '../app/hooks';
 import { removeToast } from '../features/uiSlice';
 import type { Toast as ToastType } from '../features/uiSlice';
 import { CheckCircleIcon, XCircleIcon, XIcon } from './Icons';
+import { useTranslation } from '../hooks/useTranslation';
 
 const Toast: React.FC<ToastType> = ({ id, message, type }) => {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
@@ -60,7 +62,7 @@ const Toast: React.FC<ToastType> = ({ id, message, type }) => {
               onClick={() => dispatch(removeToast(id))}
               className={`inline-flex rounded-md p-1 ${styles.textColor} hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500`}
             >
-              <span className="sr-only">Close</span>
+              <span className="sr-only">{t('common.close')}</span>
               <XIcon className="h-5 w-5" />
             </button>
           </div>

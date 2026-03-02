@@ -22,7 +22,7 @@ const ConfirmDeleteBookModal: React.FC<ConfirmDeleteBookModalProps> = ({ bookTit
                         <TrashIcon className="w-6 h-6 text-red-500" />
                         {t('importer.confirmDeleteBookTitle')}
                     </h3>
-                    <button onClick={onCancel} className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700" aria-label="Close">
+                    <button onClick={onCancel} className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700" aria-label={t('common.close')}>
                         <XIcon className="w-5 h-5" />
                     </button>
                 </div>

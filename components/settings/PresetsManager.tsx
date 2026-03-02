@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useSettingsPageContext } from '../../contexts/SettingsPageContext';
 import { SaveIcon, TrashIcon } from '../Icons';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const PresetsManager: React.FC = () => {
+  const { t } = useTranslation();
   const { presets, handleSavePreset, handleDeletePreset, handleApplyPreset } =
     useSettingsPageContext();
   const [presetName, setPresetName] = useState('');
@@ -26,21 +28,21 @@ const PresetsManager: React.FC = () => {
   return (
     <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-700">
       <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-200">
-        Generation Presets
+        {t('presets.title')}
       </h4>
       <div className="flex gap-2 mb-2">
         <input
           type="text"
           value={presetName}
           onChange={(e) => setPresetName(e.target.value)}
-          placeholder="New preset name..."
+          placeholder={t('presets.newNamePlaceholder')}
           className="flex-grow bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
         />
         <button
           onClick={onSave}
           disabled={!presetName.trim()}
           className="p-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-          aria-label="Save current settings as new preset"
+          aria-label={t('presets.saveAria')}
         >
           <SaveIcon className="w-5 h-5" />
         </button>
@@ -52,7 +54,7 @@ const PresetsManager: React.FC = () => {
             onChange={(e) => onApply(e.target.value)}
             className="flex-grow bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
           >
-            <option value="">Apply a preset...</option>
+            <option value="">{t('presets.applyPlaceholder')}</option>
             {presets.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -66,7 +68,7 @@ const PresetsManager: React.FC = () => {
             }
             disabled={!selectedPreset}
             className="p-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            aria-label="Delete selected preset"
+            aria-label={t('presets.deleteAria')}
           >
             <TrashIcon className="w-5 h-5" />
           </button>

@@ -29,7 +29,7 @@ const ProjectOverview: React.FC = () => {
         <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-600 dark:from-purple-400 dark:to-indigo-500">
           {project.title}
         </h2>
-        <p className="text-gray-500 dark:text-gray-400">Project Overview</p>
+        <p className="text-gray-500 dark:text-gray-400">{t('navigation.projectOverview')}</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

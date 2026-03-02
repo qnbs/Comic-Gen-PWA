@@ -2,10 +2,6 @@ import React from 'react';
 import { useAppDispatch, useAppSelector } from './app/hooks';
 import { setCurrentPage } from './features/uiSlice';
 import { loadProjectById } from './features/projectSlice';
-import CreatorWorkspace from './components/CreatorWorkspace';
-import SettingsPage from './components/SettingsPage';
-import HelpPage from './components/HelpPage';
-import ComicLibrary from './components/ComicLibrary';
 import ToastContainer from './components/ToastContainer';
 import OnboardingWizard from './components/OnboardingWizard';
 import {
@@ -16,6 +12,11 @@ import {
   LibraryIcon,
 } from './components/Icons';
 import { useTranslation } from './hooks/useTranslation';
+
+const CreatorWorkspace = React.lazy(() => import('./components/CreatorWorkspace'));
+const SettingsPage = React.lazy(() => import('./components/SettingsPage'));
+const HelpPage = React.lazy(() => import('./components/HelpPage'));
+const ComicLibrary = React.lazy(() => import('./components/ComicLibrary'));
 
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -101,7 +102,9 @@ const App: React.FC = () => {
         )}
 
         <main className="w-full h-full flex-grow flex items-center justify-center overflow-hidden sm:rounded-2xl shadow-2xl bg-white dark:bg-gray-800 border-0 sm:border border-gray-200 dark:border-gray-700">
-          {renderContent()}
+          <React.Suspense fallback={<div className="p-6 text-gray-500 dark:text-gray-400">{t('loader.loading')}</div>}>
+            {renderContent()}
+          </React.Suspense>
         </main>
 
         <footer className="w-full max-w-5xl text-center mt-4 sm:mt-8 pb-4 text-gray-500 dark:text-gray-500 text-xs sm:text-sm px-4">

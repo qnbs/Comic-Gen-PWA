@@ -5,8 +5,9 @@ import { useTranslation } from '../hooks/useTranslation';
 import Loader from './Loader';
 import ErrorDisplay from './ErrorDisplay';
 import { resetProject } from '../features/projectSlice';
-import ProjectImporter from './ProjectImporter';
-import MainWorkspace from './MainWorkspace';
+
+const ProjectImporter = React.lazy(() => import('./ProjectImporter'));
+const MainWorkspace = React.lazy(() => import('./MainWorkspace'));
 
 const CreatorWorkspace: React.FC = () => {
   const { t } = useTranslation();
@@ -19,7 +20,11 @@ const CreatorWorkspace: React.FC = () => {
   const renderContent = () => {
     switch (status) {
       case ProjectGenerationState.PROJECT_SETUP:
-        return <ProjectImporter />;
+        return (
+          <React.Suspense fallback={<Loader state={ProjectGenerationState.PROJECT_SETUP} />}>
+            <ProjectImporter />
+          </React.Suspense>
+        );
 
       case ProjectGenerationState.GLOBAL_ANALYSIS:
       case ProjectGenerationState.GENERATING_PAGES:
@@ -37,7 +42,15 @@ const CreatorWorkspace: React.FC = () => {
 
       case ProjectGenerationState.DONE:
       default:
-        return project ? <MainWorkspace /> : <ProjectImporter />;
+        return project ? (
+          <React.Suspense fallback={<Loader state={ProjectGenerationState.DONE} />}>
+            <MainWorkspace />
+          </React.Suspense>
+        ) : (
+          <React.Suspense fallback={<Loader state={ProjectGenerationState.PROJECT_SETUP} />}>
+            <ProjectImporter />
+          </React.Suspense>
+        );
     }
   };
 

@@ -78,7 +78,7 @@ const WorldBuilder: React.FC = () => {
             };
             dispatch(addWorldAsset({ type: typeMap[activeTab], name: newItemName.trim() }));
             setNewItemName('');
-            dispatch(addToast({ message: 'Item added successfully', type: 'success' }));
+            dispatch(addToast({ message: t('worldBuilding.addedItem'), type: 'success' }));
         }
     };
     

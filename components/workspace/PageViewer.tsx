@@ -3,8 +3,10 @@ import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import ComicPage from '../ComicPage';
 import { setActiveContext } from '../../features/projectSlice';
 import { BookOpenIcon } from '../Icons';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const PageViewer: React.FC = () => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const { project, activeContext } = useAppSelector(state => state.project.present);
     const settings = useAppSelector(state => state.settings);
@@ -41,7 +43,7 @@ const PageViewer: React.FC = () => {
 
     if (!page) return (
          <div className="p-8 h-full overflow-y-auto text-center">
-            <h2 className="text-2xl font-bold">Page Not Found</h2>
+            <h2 className="text-2xl font-bold">{t('pageViewer.notFound')}</h2>
         </div>
     );
 
@@ -50,7 +52,7 @@ const PageViewer: React.FC = () => {
              <div className="text-center mb-6">
                 <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-600 dark:from-purple-400 dark:to-indigo-500 flex items-center justify-center gap-3">
                     <BookOpenIcon className="w-7 h-7" />
-                    Page {page.pageNumber}
+                    {t('navigation.page', { index: page.pageNumber })}
                 </h2>
              </div>
              <div

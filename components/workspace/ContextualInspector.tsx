@@ -13,8 +13,10 @@ import {
   generatePropSheet,
 } from '../../features/worldThunks';
 import { RegeneratePanelSimple } from './RegeneratePanelSimple';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const SceneAssets: React.FC<{ scene: Scene }> = ({ scene }) => {
+  const { t } = useTranslation();
   const { project } = useAppSelector(state => state.project.present);
   const worldDB = project!.worldDB;
   const originalFullText = project!.originalFullText;
@@ -29,7 +31,7 @@ const SceneAssets: React.FC<{ scene: Scene }> = ({ scene }) => {
 
   return (
     <div className="space-y-4">
-      <h4 className="text-sm font-semibold uppercase text-gray-500">Assets in this Scene</h4>
+      <h4 className="text-sm font-semibold uppercase text-gray-500">{t('inspector.assetsInScene')}</h4>
       {characters.map(char => (
         <WorldAssetCard
           key={char.name}
@@ -48,12 +50,13 @@ const SceneAssets: React.FC<{ scene: Scene }> = ({ scene }) => {
           onGenerate={() => dispatch(generatePropSheet({ propName: prop.name, context: originalFullText! })).unwrap()}
         />
       ))}
-       {characters.length === 0 && props.length === 0 && <p className="text-xs text-gray-500">No defined assets detected in this scene.</p>}
+       {characters.length === 0 && props.length === 0 && <p className="text-xs text-gray-500">{t('inspector.noAssetsInScene')}</p>}
     </div>
   );
 };
 
 const PanelInspector: React.FC<{ pageId: number, panelId: string }> = ({ pageId, panelId }) => {
+  const { t } = useTranslation();
     const { project, entities } = useAppSelector(state => state.project.present);
     const page = project?.pages.find(p => p.pageNumber === pageId);
     const panel = page?.panels.find(p => p.id === panelId);
@@ -61,13 +64,14 @@ const PanelInspector: React.FC<{ pageId: number, panelId: string }> = ({ pageId,
     if (!project || !page || !panel) return null;
 
     const scene = entities.scenes[panel.sceneId];
-    if (!scene) return <p>Source scene not found.</p>;
+    if (!scene) return <p>{t('inspector.sourceSceneMissing')}</p>;
 
     return <RegeneratePanelSimple panel={panel} />;
 };
 
 
 const ContextualInspector: React.FC = () => {
+  const { t } = useTranslation();
   const { project, entities, activeContext } = useAppSelector((state) => state.project.present);
 
   if (!project) return null;
@@ -85,7 +89,7 @@ const ContextualInspector: React.FC = () => {
       default:
         return (
           <div className="text-center text-sm text-gray-500 p-4">
-            <p>Select an item from the navigator or a panel on a page to see more details here.</p>
+            <p>{t('inspector.emptyHint')}</p>
           </div>
         );
     }

@@ -25,6 +25,7 @@ import {
   DataSettings,
   Preset,
 } from '../types';
+import { useTranslation } from './useTranslation';
 import {
   saveGeminiApiKeyEncrypted,
   clearGeminiApiKeyEncrypted,
@@ -39,6 +40,7 @@ const isAppSettings = (obj: unknown): obj is Partial<AppSettings> => {
 };
 
 export const useSettingsPage = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const settings = useAppSelector((state) => state.settings);
   const { theme } = useAppSelector((state) => state.ui);
@@ -170,24 +172,24 @@ export const useSettingsPage = () => {
           }
         } catch (error: unknown) {
           console.error('Failed to import settings:', error);
-          alert('Failed to import settings. The file might be corrupt.');
+          dispatch(addToast({ message: t('settingsPage.importFailed'), type: 'error' }));
         }
       };
       reader.readAsText(file);
     },
-    [dispatch],
+    [dispatch, t],
   );
 
    const handleExportAllData = React.useCallback(() => {
-    dispatch(addToast({ message: 'Preparing full backup...', type: 'info' }));
+    dispatch(addToast({ message: t('settingsPage.preparingBackup'), type: 'info' }));
     dispatch(exportAllProjects()).unwrap()
         .then(() => {
-            dispatch(addToast({ message: 'Full backup exported.', type: 'success'}));
+            dispatch(addToast({ message: t('settingsPage.backupExported'), type: 'success'}));
         })
         .catch((error: unknown) => {
             dispatch(addToast({ message: String(error), type: 'error'}));
         });
-  }, [dispatch]);
+  }, [dispatch, t]);
 
   const handleImportProjects = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

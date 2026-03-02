@@ -86,7 +86,7 @@ const SceneSelectorCard: React.FC<{
       }`}
     >
       {/* Intensity Bar */}
-      <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gray-200 dark:bg-gray-700" title={`Action Score: ${scene.actionScore}/10`}>
+      <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gray-200 dark:bg-gray-700" title={`${t('pageLayout.actionScoreLabel')}: ${scene.actionScore}/10`}>
         <div 
             className={`w-full absolute bottom-0 transition-all duration-500 ${intensityColor}`} 
             style={{ height: intensityHeight }} 
@@ -104,7 +104,7 @@ const SceneSelectorCard: React.FC<{
           <div className="flex justify-between items-center">
               <p className="font-bold text-gray-800 dark:text-gray-200">{t('scene.title', { index: index + 1 })}</p>
               <span className={`text-[10px] font-bold px-1.5 rounded ${scene.actionScore > 7 ? 'text-red-600 bg-red-100 dark:text-red-300 dark:bg-red-900/30' : 'text-gray-500 bg-gray-100 dark:text-gray-400 dark:bg-gray-800'}`}>
-                  Score: {scene.actionScore}
+                  {t('pageLayout.scoreLabel')}: {scene.actionScore}
               </span>
           </div>
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-0.5">{scene.summary}</p>
@@ -141,7 +141,7 @@ const PageComposerContent: React.FC = () => {
             <h4 className="font-bold mb-4 flex items-center justify-between">
                 {t('pageLayout.selectScenes')}
                 <span className="text-xs font-normal text-gray-500 bg-white dark:bg-gray-900 px-2 py-1 rounded border border-gray-200 dark:border-gray-700">
-                    {scenes.length} Available
+                  {t('pageLayout.availableCount', { count: scenes.length })}
                 </span>
             </h4>
             <div className="space-y-3 max-h-[calc(100vh-350px)] overflow-y-auto pr-2">
@@ -163,10 +163,10 @@ const PageComposerContent: React.FC = () => {
 
           <div className="lg:col-span-1">
                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 sticky top-4 shadow-lg">
-                   <h4 className="font-bold text-lg mb-4">Page Preview</h4>
+                   <h4 className="font-bold text-lg mb-4">{t('pageLayout.previewTitle')}</h4>
                    <div className="aspect-[11/16] w-full bg-gray-100 dark:bg-gray-900 rounded border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center p-4 text-center">
                        {selectedSceneIndices.length === 0 ? (
-                           <p className="text-gray-400 text-sm">Select scenes to see layout estimate</p>
+                       <p className="text-gray-400 text-sm">{t('pageLayout.previewHint')}</p>
                        ) : (
                            <div className="w-full h-full flex flex-col gap-1">
                                {selectedSceneIndices.map((idx, i) => {
@@ -177,7 +177,7 @@ const PageComposerContent: React.FC = () => {
                                    
                                    return (
                                        <div key={i} className={`${colorClass} border rounded flex items-center justify-center text-[10px] font-bold text-gray-800 dark:text-gray-200 overflow-hidden relative`} style={{ height: `${heightPercent}%`}}>
-                                           <span className="z-10">Scene {idx + 1}</span>
+                                           <span className="z-10">{t('pageLayout.previewSceneLabel', { index: idx + 1 })}</span>
                                        </div>
                                    )
                                })}
@@ -186,7 +186,7 @@ const PageComposerContent: React.FC = () => {
                    </div>
                     <div className="mt-6">
                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 text-center">
-                             {selectedSceneIndices.length} scenes selected
+                                   {t('pageLayout.selectedScenes', { count: selectedSceneIndices.length })}
                          </p>
                         <button
                         onClick={handleGeneratePage}
@@ -204,8 +204,9 @@ const PageComposerContent: React.FC = () => {
 };
 
 const PageComposerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { t } = useTranslation();
   const value = usePageComposer();
-  if (!value) return <div>Error: No active chapter selected for layout.</div>;
+  if (!value) return <div>{t('pageLayout.noActiveChapter')}</div>;
   return <PageComposerContext.Provider value={value}>{children}</PageComposerContext.Provider>;
 };
 

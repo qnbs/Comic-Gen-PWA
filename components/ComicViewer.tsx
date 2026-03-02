@@ -208,13 +208,13 @@ const ComicViewerContent: React.FC = () => {
         </div>
       ) : (
         <div className="flex-grow flex flex-col items-center justify-center text-center p-8 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
-          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">No Pages Yet!</h3>
+          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">{t('comicViewer.emptyTitle')}</h3>
           <p className="text-gray-600 dark:text-gray-400 mt-2 mb-6 max-w-sm">
-            You haven't generated any pages for this project. Go to a chapter's page layout to start composing your comic.
+            {t('comicViewer.emptyDescription')}
           </p>
           <button onClick={() => dispatch(setActiveContext({ type: 'page-layout', chapterId: 0 }))} className="flex items-center gap-2 py-2 px-5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
             <ScissorsIcon className="w-5 h-5" />
-            Go to Page Layout
+            {t('comicViewer.goToLayout')}
           </button>
         </div>
       )}

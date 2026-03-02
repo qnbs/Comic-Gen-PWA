@@ -62,12 +62,12 @@ export const RegeneratePanelSimple: React.FC<RegeneratePanelSimpleProps> = ({ pa
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold uppercase text-gray-500">Panel Inspector</h3>
+      <h3 className="text-sm font-semibold uppercase text-gray-500">{t('inspector.panelInspector')}</h3>
       <div className="w-full">
         {imageUrl ? (
           <img
             src={imageUrl}
-            alt="Current panel image"
+            alt={t('inspector.currentPanelImage')}
             className="rounded-md w-full object-contain"
           />
         ) : (

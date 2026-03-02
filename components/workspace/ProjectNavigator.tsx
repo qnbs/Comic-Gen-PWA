@@ -3,6 +3,7 @@ import React from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { setActiveContext } from '../../features/projectSlice';
 import { BookOpenIcon, SparklesIcon, ImageIcon, ScissorsIcon, ChevronRightIcon } from '../Icons';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const NavItem: React.FC<{
   label: string;
@@ -29,6 +30,7 @@ const NavItem: React.FC<{
 });
 
 const ProjectNavigator: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { project, activeContext } = useAppSelector((state) => state.project.present);
   const [expanded, setExpanded] = React.useState<Record<string, boolean>>({});
@@ -46,7 +48,7 @@ const ProjectNavigator: React.FC = () => {
       </h2>
       <nav className="flex-grow space-y-2 overflow-y-auto">
         <NavItem
-          label="Project Overview"
+          label={t('navigation.projectOverview')}
           onClick={() => dispatch(setActiveContext({ type: 'overview' }))}
           isActive={activeContext.type === 'overview'}
           icon={<BookOpenIcon className="w-4 h-4" />}
@@ -65,7 +67,7 @@ const ProjectNavigator: React.FC = () => {
                         {chapter.scenes.map((scene, sceneIndex) => (
                             <NavItem
                                 key={sceneIndex}
-                                label={`Scene ${sceneIndex + 1}`}
+                              label={t('navigation.scene', { index: sceneIndex + 1 })}
                                 onClick={() => dispatch(setActiveContext({ type: 'scene', chapterId: chapter.chapterIndex, sceneId: sceneIndex }))}
                                 isActive={activeContext.type === 'scene' && activeContext.chapterId === chapter.chapterIndex && activeContext.sceneId === sceneIndex}
                                 icon={<div className="w-4 h-4 text-xs font-mono bg-gray-300 dark:bg-gray-600 rounded flex items-center justify-center">{sceneIndex+1}</div>}
@@ -79,9 +81,9 @@ const ProjectNavigator: React.FC = () => {
         </div>
 
         <div className="pt-2 border-t border-gray-300 dark:border-gray-600 space-y-1">
-            <h3 className="text-xs font-semibold uppercase text-gray-500 px-2 mt-2">Production</h3>
+            <h3 className="text-xs font-semibold uppercase text-gray-500 px-2 mt-2">{t('navigation.production')}</h3>
              <NavItem
-              label="World Building"
+              label={t('navigation.worldBuilding')}
               onClick={() => dispatch(setActiveContext({ type: 'world-characters' }))}
               isActive={activeContext.type.startsWith('world-')}
               icon={<SparklesIcon className="w-4 h-4" />}
@@ -89,7 +91,7 @@ const ProjectNavigator: React.FC = () => {
             {project.chapters.map(c => (
                  <NavItem
                   key={`layout-${c.chapterIndex}`}
-                  label={`Layout: ${c.title}`}
+                  label={t('navigation.layoutPrefix', { title: c.title })}
                   onClick={() => dispatch(setActiveContext({ type: 'page-layout', chapterId: c.chapterIndex }))}
                   isActive={activeContext.type === 'page-layout' && activeContext.chapterId === c.chapterIndex}
                   icon={<ScissorsIcon className="w-4 h-4" />}
@@ -99,10 +101,10 @@ const ProjectNavigator: React.FC = () => {
 
         {project.pages.length > 0 && (
             <div className="pt-2 border-t border-gray-300 dark:border-gray-600 space-y-1">
-                 <h3 className="text-xs font-semibold uppercase text-gray-500 px-2 mt-2">Generated Pages</h3>
+                <h3 className="text-xs font-semibold uppercase text-gray-500 px-2 mt-2">{t('navigation.generatedPages')}</h3>
                  <NavItem
                     key="comic-viewer"
-                    label="Comic Viewer"
+                  label={t('navigation.comicViewer')}
                     onClick={() => dispatch(setActiveContext({ type: 'comic-viewer' }))}
                     isActive={activeContext.type === 'comic-viewer'}
                     icon={<BookOpenIcon className="w-4 h-4" />}
@@ -110,7 +112,7 @@ const ProjectNavigator: React.FC = () => {
                  {project.pages.map(page => (
                      <NavItem
                         key={page.pageNumber}
-                        label={`Page ${page.pageNumber}`}
+                    label={t('navigation.page', { index: page.pageNumber })}
                         onClick={() => dispatch(setActiveContext({ type: 'page', id: page.pageNumber }))}
                         isActive={(activeContext.type === 'page' && activeContext.id === page.pageNumber) || (activeContext.type === 'panel' && activeContext.pageId === page.pageNumber)}
                         icon={<ImageIcon className="w-4 h-4" />}

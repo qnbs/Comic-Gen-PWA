@@ -2,7 +2,7 @@ import React from 'react';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { setCurrentPage } from '../features/uiSlice';
 import WorkspaceToolbar from './WorkspaceToolbar';
-import { MenuIcon, PanelRightIcon, XIcon, LibraryIcon, CogIcon } from './Icons';
+import { MenuIcon, PanelRightIcon, XIcon, LibraryIcon, CogIcon, HelpCircleIcon } from './Icons';
 import { useTranslation } from '../hooks/useTranslation';
 
 const ProjectNavigator = React.lazy(() => import('./workspace/ProjectNavigator'));
@@ -99,12 +99,20 @@ const MainWorkspace: React.FC = () => {
         </div>
          {/* Mobile Settings Link in Drawer */}
         <div className="lg:hidden p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-            <button 
-                onClick={() => dispatch(setCurrentPage('settings'))}
-                className="flex items-center gap-3 text-gray-700 dark:text-gray-300 font-medium w-full p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              <CogIcon className="w-5 h-5" /> {t('navigation.settings')}
-            </button>
+            <div className="space-y-2">
+              <button 
+                  onClick={() => dispatch(setCurrentPage('settings'))}
+                  className="flex items-center gap-3 text-gray-700 dark:text-gray-300 font-medium w-full p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
+              >
+                <CogIcon className="w-5 h-5" /> {t('navigation.settings')}
+              </button>
+              <button 
+                  onClick={() => dispatch(setCurrentPage('help'))}
+                  className="flex items-center gap-3 text-gray-700 dark:text-gray-300 font-medium w-full p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
+              >
+                <HelpCircleIcon className="w-5 h-5" /> {t('helpPage.title')}
+              </button>
+            </div>
         </div>
       </div>
       

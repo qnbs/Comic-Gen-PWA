@@ -2,11 +2,12 @@ import React from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { createProject } from '../features/projectSlice';
+import { setCurrentPage } from '../features/uiSlice';
 import LibraryBrowser from './importer/LibraryBrowser';
 import FileUpload from './importer/FileUpload';
 import PasteText from './importer/PasteText';
 import LanguageSelector from './LanguageSelector';
-import { LibraryIcon, UploadCloudIcon, ClipboardIcon } from './Icons';
+import { LibraryIcon, UploadCloudIcon, ClipboardIcon, CogIcon, HelpCircleIcon } from './Icons';
 
 type ImportTab = 'library' | 'upload' | 'paste';
 
@@ -37,17 +38,18 @@ const useProjectImporter = () => {
   const [text, setText] = React.useState('');
   const [title, setTitle] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
+  const { t } = useTranslation();
 
   const dispatch = useAppDispatch();
   const { language } = useAppSelector((state) => state.ui);
 
   const handleSubmit = React.useCallback(() => {
     if (!text.trim() || !title.trim()) {
-      setError('Please provide a title and text content.');
+      setError(t('importer.missingTitleAndText'));
       return;
     }
     dispatch(createProject({ text, title, language }));
-  }, [text, title, dispatch, language]);
+  }, [text, title, dispatch, language, t]);
 
   const handleDataExtracted = React.useCallback((data: { title: string; text: string; error?: string | null }) => {
     setTitle(data.title);
@@ -79,17 +81,36 @@ const TabButton: React.FC<{ tabId: ImportTab; label: string; icon: React.ReactNo
 
 const ProjectImporterContent: React.FC = () => {
   const { t } = useTranslation();
+  const dispatch = useAppDispatch();
   const { activeTab, text, title, error, handleDataExtracted, handleSubmit } = useProjectImporterContext();
 
   return (
     <div className="w-full max-w-4xl mx-auto bg-white/50 dark:bg-gray-800/50 rounded-2xl border border-gray-300 dark:border-gray-700 shadow-2xl overflow-hidden">
       <div className="p-0 relative">
         <div className="absolute top-4 right-4 z-10">
-          <LanguageSelector />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => dispatch(setCurrentPage('settings'))}
+              className="p-2 rounded-full bg-gray-200 dark:bg-gray-900 hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors"
+              aria-label={t('settingsPage.openSettings')}
+              title={t('settingsPage.openSettings')}
+            >
+              <CogIcon className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => dispatch(setCurrentPage('help'))}
+              className="p-2 rounded-full bg-gray-200 dark:bg-gray-900 hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors"
+              aria-label={t('settingsPage.openHelp')}
+              title={t('settingsPage.openHelp')}
+            >
+              <HelpCircleIcon className="w-4 h-4" />
+            </button>
+            <LanguageSelector />
+          </div>
         </div>
         <div className="pt-8 px-8 pb-2">
              <h2 className="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-600 dark:from-purple-400 dark:to-indigo-500 mb-2">
-            Create New Comic Project
+            {t('importer.createProjectTitle')}
             </h2>
         </div>
        
@@ -112,7 +133,7 @@ const ProjectImporterContent: React.FC = () => {
             disabled={!text.trim() || !title.trim()}
             className="w-full py-3 px-6 bg-indigo-600 rounded-lg text-lg font-bold text-white transition-all duration-300 shadow-lg hover:bg-indigo-700 disabled:bg-gray-500 dark:disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Analyze & Create Project
+            {t('importer.analyzeCreateProject')}
           </button>
         </div>
       )}

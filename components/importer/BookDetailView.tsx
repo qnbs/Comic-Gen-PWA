@@ -71,7 +71,7 @@ const BookDetailView: React.FC<{ bookId: string }> = ({ bookId }) => {
       .unwrap()
       .then(() => {
         dispatch(
-          addToast({ message: `Book removed from your library.`, type: 'success' }),
+          addToast({ message: t('importer.bookRemovedFromLibrary'), type: 'success' }),
         );
         setIsDeleting(false);
       })
@@ -81,13 +81,13 @@ const BookDetailView: React.FC<{ bookId: string }> = ({ bookId }) => {
       });
   };
 
-  if (status === 'loading' && !book) return <div>Loading book...</div>;
+  if (status === 'loading' && !book) return <div>{t('importer.loadingBook')}</div>;
   if (!book)
     return (
       <div>
-        Book not found.{' '}
+        {t('importer.bookNotFound')}{' '}
         <button onClick={handleBack} className="text-indigo-500 hover:underline">
-          Go back.
+          {t('importer.goBack')}
         </button>
       </div>
     );

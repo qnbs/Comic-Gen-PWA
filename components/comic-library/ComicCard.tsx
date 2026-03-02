@@ -28,11 +28,11 @@ const ComicCard: React.FC<ComicCardProps> = ({ project, onLoadProject }) => {
 
   const handleExport = (e: React.MouseEvent) => {
     e.stopPropagation();
-    dispatch(addToast({ message: 'Preparing export...', type: 'info' }));
+    dispatch(addToast({ message: t('comicLibrary.preparingExport'), type: 'info' }));
     dispatch(exportProjectFromJson(project.id))
       .unwrap()
       .then(projectTitle => {
-        dispatch(addToast({ message: `"${projectTitle}" exported.`, type: 'success' }));
+        dispatch(addToast({ message: t('comicLibrary.projectExported', { title: projectTitle }), type: 'success' }));
       })
       .catch((error: unknown) => {
         dispatch(addToast({ message: String(error), type: 'error' }));
@@ -102,8 +102,8 @@ const ComicCard: React.FC<ComicCardProps> = ({ project, onLoadProject }) => {
           <button
             onClick={handleExport}
             className="col-span-1 p-2 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 text-white rounded-xl transition-colors flex items-center justify-center"
-            title="Export project data"
-            aria-label={`Export ${project.title}`}
+            title={t('comicLibrary.exportProjectData')}
+            aria-label={`${t('comicLibrary.exportProjectData')}: ${project.title}`}
           >
             <ArchiveIcon className="w-4 h-4" />
           </button>

@@ -30,7 +30,7 @@ const GeneralSettings: React.FC = () => {
     <div className="p-4 max-w-md mx-auto space-y-6">
       <div>
         <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
-          Appearance
+          {t('settingsPage.appearance')}
         </h4>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -75,7 +75,7 @@ const GeneralSettings: React.FC = () => {
 
       <div>
         <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
-          Speech Bubbles
+          {t('settings.speechBubblesTitle')}
         </h4>
         <div className="flex items-center justify-between mb-4">
           <label
@@ -162,9 +162,9 @@ const GeneralSettings: React.FC = () => {
               {t('settings.bubbleColors')}
             </label>
             <div className="flex gap-2">
-              <input type="color" title="Background Color" value={speechBubbles.backgroundColor} onChange={(e) => handleSpeechBubbleSettingChange('backgroundColor', e.target.value)} className="w-9 h-8 p-0 border-none rounded-md cursor-pointer" />
-              <input type="color" title="Text Color" value={speechBubbles.textColor} onChange={(e) => handleSpeechBubbleSettingChange('textColor', e.target.value)} className="w-9 h-8 p-0 border-none rounded-md cursor-pointer" />
-              <input type="color" title="Stroke Color" value={speechBubbles.strokeColor} onChange={(e) => handleSpeechBubbleSettingChange('strokeColor', e.target.value)} className="w-9 h-8 p-0 border-none rounded-md cursor-pointer" />
+              <input type="color" title={t('settings.backgroundColor')} value={speechBubbles.backgroundColor} onChange={(e) => handleSpeechBubbleSettingChange('backgroundColor', e.target.value)} className="w-9 h-8 p-0 border-none rounded-md cursor-pointer" />
+              <input type="color" title={t('settings.textColor')} value={speechBubbles.textColor} onChange={(e) => handleSpeechBubbleSettingChange('textColor', e.target.value)} className="w-9 h-8 p-0 border-none rounded-md cursor-pointer" />
+              <input type="color" title={t('settings.strokeColor')} value={speechBubbles.strokeColor} onChange={(e) => handleSpeechBubbleSettingChange('strokeColor', e.target.value)} className="w-9 h-8 p-0 border-none rounded-md cursor-pointer" />
             </div>
           </div>
            <div>
@@ -207,7 +207,7 @@ const GeneralSettings: React.FC = () => {
           </div>
           <div className="flex items-center justify-between">
             <label className="font-medium text-gray-700 dark:text-gray-300 text-sm">
-              Placement Algorithm
+              {t('settings.placementAlgorithm')}
             </label>
             <div className="flex bg-gray-100 dark:bg-gray-900 rounded-md p-1">
               {(['physics', 'static'] as SpeechBubblePlacement[]).map((p) => (
@@ -240,14 +240,14 @@ const GeneralSettings: React.FC = () => {
         </p>
         <div className="space-y-3">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="gemini-api-key-input">
-            Gemini API Key
+            {t('settingsPage.apiKeyLabel')}
           </label>
           <input
             id="gemini-api-key-input"
             type="password"
             value={geminiApiKeyInput}
             onChange={(e) => setGeminiApiKeyInput(e.target.value)}
-            placeholder="AIza..."
+            placeholder={t('settingsPage.apiKeyPlaceholder')}
             autoComplete="off"
             className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm"
           />
@@ -276,14 +276,14 @@ const GeneralSettings: React.FC = () => {
 
       <div>
         <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
-          Accessibility
+          {t('settingsPage.accessibility')}
         </h4>
         <div className="flex items-center justify-between mb-4">
           <label
             htmlFor="reduce-motion-toggle"
             className="font-medium text-gray-700 dark:text-gray-300"
           >
-            Reduce Motion
+            {t('settingsPage.reduceMotion')}
           </label>
           <input
             id="reduce-motion-toggle"

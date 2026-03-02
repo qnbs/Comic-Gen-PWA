@@ -86,8 +86,8 @@ const EditableSceneCard: React.FC<{
        
         <div className="flex items-center gap-3">
              {!isEditing && (
-                <div className={`text-xs font-bold px-3 py-1.5 rounded-full border ${getActionColor(scene.actionScore)} shadow-sm`} title="Action Score (Panel Size)">
-                    Intensity: {scene.actionScore}/10
+                <div className={`text-xs font-bold px-3 py-1.5 rounded-full border ${getActionColor(scene.actionScore)} shadow-sm`} title={t('scene.actionScore')}>
+                  {t('scene.intensity')}: {scene.actionScore}/10
                 </div>
             )}
             <div className="flex gap-2">
@@ -127,9 +127,9 @@ const EditableSceneCard: React.FC<{
                     className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                 />
                 <div className="flex justify-between text-[10px] text-gray-400 mt-2 font-medium uppercase tracking-wider">
-                    <span>Quiet</span>
-                    <span>Balanced</span>
-                    <span>Dynamic</span>
+                  <span>{t('scene.quiet')}</span>
+                  <span>{t('scene.balanced')}</span>
+                  <span>{t('scene.dynamic')}</span>
                 </div>
            </div>
            
@@ -175,7 +175,7 @@ const EditableSceneCard: React.FC<{
             <div className="bg-gray-50 dark:bg-gray-900/30 p-5 rounded-2xl border border-gray-100 dark:border-gray-700/50 mt-2 relative overflow-hidden">
                  <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500/30"></div>
                  <span className="text-[10px] font-bold uppercase tracking-wide text-indigo-500/80 block mb-2 flex items-center gap-2">
-                     <BookOpenIcon className="w-3 h-3" /> Visual Prompt
+                   <BookOpenIcon className="w-3 h-3" /> {t('scene.visualPrompt')}
                  </span>
                 <p className="text-xs text-gray-600 dark:text-gray-400 italic leading-relaxed font-mono">{scene.visualPrompt}</p>
             </div>
@@ -195,7 +195,7 @@ const SceneEditor: React.FC = () => {
     const chapterIndex = activeContext.type === 'chapter' ? activeContext.id : activeContext.chapterId;
     const chapter = project.chapters[chapterIndex];
     
-    if (!chapter) return <p>Chapter not found.</p>;
+    if (!chapter) return <p>{t('scene.chapterNotFound')}</p>;
 
     return (
         <div className="p-4 sm:p-8 h-full overflow-y-auto pb-32">

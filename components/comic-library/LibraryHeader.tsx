@@ -24,7 +24,7 @@ const LibraryHeader: React.FC = () => {
       dispatch(importProject(file))
         .unwrap()
         .then((projectTitle) => {
-          dispatch(addToast({ message: `Project "${projectTitle}" imported successfully!`, type: 'success'}));
+          dispatch(addToast({ message: t('comicLibrary.projectImported', { title: projectTitle }), type: 'success'}));
         })
         .catch((error: unknown) => {
           dispatch(addToast({ message: String(error), type: 'error' }));
@@ -72,7 +72,7 @@ const LibraryHeader: React.FC = () => {
          <button
             onClick={handleImportClick}
             className="p-2.5 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            title="Import project from .json file"
+          title={t('comicLibrary.importProjectJson')}
           >
             <UploadIcon className="w-5 h-5" />
           </button>

@@ -6,6 +6,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { setViewerZoomLevel, setSaveStatus } from '../features/uiSlice';
 
 const SaveStatusIndicator: React.FC = () => {
+  const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const { saveStatus } = useAppSelector((state) => state.ui);
 
@@ -23,9 +24,9 @@ const SaveStatusIndicator: React.FC = () => {
     }
 
     const statusMap = {
-        saving: { icon: <LoaderIcon className="w-4 h-4 animate-spin"/>, text: 'Saving...', color: 'text-gray-500 dark:text-gray-400' },
-        saved: { icon: <CheckCircleIcon className="w-4 h-4"/>, text: 'Saved', color: 'text-green-600 dark:text-green-400' },
-        error: { icon: <XCircleIcon className="w-4 h-4"/>, text: 'Save Error', color: 'text-red-600 dark:text-red-400' },
+      saving: { icon: <LoaderIcon className="w-4 h-4 animate-spin"/>, text: t('common.saving'), color: 'text-gray-500 dark:text-gray-400' },
+      saved: { icon: <CheckCircleIcon className="w-4 h-4"/>, text: t('common.saved'), color: 'text-green-600 dark:text-green-400' },
+      error: { icon: <XCircleIcon className="w-4 h-4"/>, text: t('common.saveError'), color: 'text-red-600 dark:text-red-400' },
     };
 
     const currentStatus = statusMap[saveStatus];

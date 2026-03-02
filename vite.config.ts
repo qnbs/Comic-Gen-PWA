@@ -20,10 +20,25 @@ export default defineConfig({
     assetsInlineLimit: 4096,
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom', 'react-redux', '@reduxjs/toolkit'],
-          d3: ['d3-hierarchy', 'd3-force', 'd3-cloud'],
-          vendor: ['jszip', 'idb', 'redux-undo', 'reselect'],
+        manualChunks(id) {
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'react';
+          }
+          if (id.includes('node_modules/react-redux') || id.includes('node_modules/@reduxjs/toolkit') || id.includes('node_modules/redux-undo') || id.includes('node_modules/reselect')) {
+            return 'state';
+          }
+          if (id.includes('node_modules/d3-')) {
+            return 'd3';
+          }
+          if (id.includes('node_modules/@google/genai')) {
+            return 'ai';
+          }
+          if (id.includes('node_modules/framer-motion')) {
+            return 'motion';
+          }
+          if (id.includes('node_modules/idb') || id.includes('node_modules/jszip')) {
+            return 'data';
+          }
         },
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',

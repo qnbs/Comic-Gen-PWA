@@ -13,6 +13,7 @@ interface ReaderTabProps {
 }
 
 const ReaderTab: React.FC<ReaderTabProps> = ({ book, wordToHighlight, clearHighlight }) => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(book.fullText || '');
@@ -80,16 +81,16 @@ const ReaderTab: React.FC<ReaderTabProps> = ({ book, wordToHighlight, clearHighl
                     className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-2"
                 >
                     {isEditing ? <XIcon className="w-5 h-5"/> : <PencilIcon className="w-5 h-5" />}
-                    {isEditing ? 'Cancel' : 'Edit Text'}
+                    {isEditing ? t('common.cancel') : t('bookDetail.editText')}
                 </button>
                  <button onClick={exportTxt} className="px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 flex items-center gap-2">
                     <DownloadIcon className="w-5 h-5" />
-                    Export .txt
+                    {t('bookDetail.exportText')}
                  </button>
             </div>
             {wordToHighlight && (
                 <div className="flex items-center gap-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1">
-                    <span>Highlighting: <span className="font-semibold">{wordToHighlight}</span></span>
+                    <span>{t('bookDetail.highlighting')}: <span className="font-semibold">{wordToHighlight}</span></span>
                     <button onClick={clearHighlight} className="p-1 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600"><XIcon className="w-4 h-4" /></button>
                 </div>
             )}

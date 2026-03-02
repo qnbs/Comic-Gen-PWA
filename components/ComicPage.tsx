@@ -543,11 +543,11 @@ const Panel: React.FC<PanelProps> = React.memo(
           <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white p-4 text-center z-20">
             <div className="w-10 h-10 border-4 border-t-transparent border-white rounded-full animate-spin mb-4"></div>
             <p className="font-semibold">
-              {isRegenerating ? 'Regenerating Image...' : 'Generating Video...'}
+              {isRegenerating ? t('comic.regeneratingImage') : t('comic.generatingVideo')}
             </p>
             {isVideoGenerating && (
               <p className="text-sm mt-2">
-                This can take several minutes. Please be patient.
+                {t('comic.videoGenerationHint')}
               </p>
             )}
           </div>
@@ -557,18 +557,18 @@ const Panel: React.FC<PanelProps> = React.memo(
             <div
               className={`panel-handle panel-move-handle transition-opacity duration-300 ${isTouched ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
               onMouseDown={(e) => handleInteractionStart(e, 'move')}
-              title="Move Panel"
+              title={t('comic.movePanel')}
               role="button"
-              aria-label="Move Panel"
+              aria-label={t('comic.movePanel')}
             >
               <MoveIcon className="w-5 h-5 text-gray-800" />
             </div>
             <div
               className={`panel-handle panel-resize-handle transition-opacity duration-300 ${isTouched ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
               onMouseDown={(e) => handleInteractionStart(e, 'resize')}
-              title="Resize Panel"
+              title={t('comic.resizePanel')}
               role="button"
-              aria-label="Resize Panel"
+              aria-label={t('comic.resizePanel')}
             />
             <div className={`absolute inset-0 bg-black/60 flex items-center justify-center gap-2 transition-opacity duration-300 z-10 ${isTouched ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'}`}>
               <button
@@ -581,7 +581,7 @@ const Panel: React.FC<PanelProps> = React.memo(
               <button
                 onClick={(e) => { e.stopPropagation(); onGenerateVideoClick(panel); }}
                 className="p-3 bg-white/90 text-gray-900 rounded-full hover:bg-white backdrop-blur-sm transition-transform hover:scale-110 shadow-lg"
-                aria-label="Generate Video Panel"
+                aria-label={t('comic.generateVideoPanelAria')}
               >
                 <VideoIcon className="w-6 h-6" />
               </button>

@@ -45,7 +45,7 @@ const ConfirmModal: React.FC<{
           <button
             onClick={onClose}
             className="p-1 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-            aria-label="Close"
+            aria-label={t('common.close')}
           >
             <XIcon className="w-5 h-5" />
           </button>
@@ -170,7 +170,7 @@ const DataSettings: React.FC = () => {
               htmlFor="auto-save-toggle"
               className="font-medium text-yellow-700 dark:text-yellow-300"
             >
-              Auto-save project
+              {t('settingsPage.autoSaveProject')}
             </label>
             <input
               id="auto-save-toggle"

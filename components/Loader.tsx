@@ -16,9 +16,9 @@ const Loader: React.FC<LoaderProps> = ({ state }) => {
     if (state === ProjectGenerationState.GLOBAL_ANALYSIS && creationProgress) {
       return {
         icon: <BookOpenIcon className="w-12 h-12" />,
-        text: 'System Status: INITIALIZING',
+        text: t('loader.statusInitializing'),
         description: creationProgress.step,
-        phase: 'ANALYSIS'
+        phase: t('loader.phaseAnalysis')
       };
     }
 
@@ -26,37 +26,37 @@ const Loader: React.FC<LoaderProps> = ({ state }) => {
       case ProjectGenerationState.GLOBAL_ANALYSIS:
         return {
           icon: <BookOpenIcon className="w-12 h-12" />,
-          text: 'System Status: ANALYZING',
+          text: t('loader.statusAnalyzing'),
           description: t('loader.analyzingTextDesc'),
-          phase: 'DECONSTRUCTION'
+          phase: t('loader.phaseDeconstruction')
         };
       case ProjectGenerationState.GENERATING_PAGES:
         return {
           icon: <ImageIcon className="w-12 h-12" />,
-          text: 'System Status: RENDERING',
+          text: t('loader.statusRendering'),
           description: t('loader.generatingImagesDesc'),
-          phase: 'SYNTHESIS'
+          phase: t('loader.phaseSynthesis')
         };
       case ProjectGenerationState.WORLD_BUILDING:
         return {
           icon: <WandIcon className="w-12 h-12" />,
-          text: 'System Status: BUILDING',
-          description: 'Constructing visual matrix for consistent entities.',
-          phase: 'CONSTRUCTION'
+          text: t('loader.statusBuilding'),
+          description: t('loader.buildingVisualMatrix'),
+          phase: t('loader.phaseConstruction')
         };
       case ProjectGenerationState.PAGE_LAYOUT:
         return {
           icon: <ScissorsIcon className="w-12 h-12" />,
-          text: 'System Status: COMPOSING',
-          description: 'Calculating optimal panel geometry vectors.',
-          phase: 'LAYOUT'
+          text: t('loader.statusComposing'),
+          description: t('loader.calculatingPanelGeometry'),
+          phase: t('loader.phaseLayout')
         };
       default:
         return {
           icon: null,
           text: t('loader.loading'),
           description: t('loader.pleaseWait'),
-          phase: 'LOADING'
+          phase: t('loader.phaseLoading')
         };
     }
   }, [state, t, creationProgress]);
@@ -99,7 +99,7 @@ const Loader: React.FC<LoaderProps> = ({ state }) => {
             {creationProgress && (
                 <div className="w-full mt-6 space-y-2">
                     <div className="flex justify-between text-xs font-bold text-indigo-600 dark:text-indigo-400 font-mono">
-                        <span>COMPLETION</span>
+                      <span>{t('loader.completion')}</span>
                         <span>{creationProgress.progress}%</span>
                     </div>
                     <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-none h-1.5 overflow-hidden border border-gray-300 dark:border-gray-700">
